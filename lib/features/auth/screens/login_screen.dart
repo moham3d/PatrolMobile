@@ -161,11 +161,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 
                 const SizedBox(height: 24),
                 
-                // Help text
+                // Help text with role information
                 Text(
                   'For emergency access, contact your supervisor',
                   style: Theme.of(context).textTheme.bodySmall,
                   textAlign: TextAlign.center,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Test credentials info (for development)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Test Credentials:',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Username: admin\nPassword: admin123',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.blue.shade600,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
