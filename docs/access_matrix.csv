@@ -1,0 +1,161 @@
+Feature,Endpoint,Admin,Operations Manager,Site Manager,Supervisor,Guard,Mobile Guard,Visitor,Description
+Authentication,POST /auth/login,✓,✓,✓,✓,✓,✓,✓,User login
+Authentication,POST /auth/logout,✓,✓,✓,✓,✓,✓,✓,User logout
+Authentication,POST /auth/refresh,✓,✓,✓,✓,✓,✓,✓,Refresh access token
+Authentication,GET /auth/me,✓,✓,✓,✓,✓,✓,✓,Get current user info
+Authentication,POST /auth/register,✓,✓,✗,✗,✗,✗,✗,Register new user
+Authentication,POST /auth/reset-password,✓,✓,✓,✓,✓,✓,✗,Reset password
+Authentication,POST /auth/change-password,✓,✓,✓,✓,✓,✓,✗,Change password
+Users,GET /users,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,List users
+Users,POST /users,✓,✓,✓,✗,✗,✗,✗,Create user
+Users,GET /users/{id},✓,✓,✓ (site only),✓ (site only),✓ (self only),✓ (self only),✗,Get user details
+Users,PUT /users/{id},✓,✓,✓ (site only),✗,✓ (self only),✓ (self only),✗,Update user
+Users,DELETE /users/{id},✓,✓,✗,✗,✗,✗,✗,Delete user
+Users,PUT /users/{id}/status,✓,✓,✓ (site only),✗,✗,✗,✗,Update user status
+Users,GET /users/{id}/permissions,✓,✓,✓ (site only),✗,✓ (self only),✓ (self only),✗,Get user permissions
+Sites,GET /sites,✓,✓,✓ (assigned only),✓ (assigned only),✓ (assigned only),✓ (assigned only),✗,List sites
+Sites,POST /sites,✓,✓,✗,✗,✗,✗,✗,Create site
+Sites,GET /sites/{id},✓,✓,✓ (assigned only),✓ (assigned only),✓ (assigned only),✓ (assigned only),✗,Get site details
+Sites,PUT /sites/{id},✓,✓,✓ (managed only),✗,✗,✗,✗,Update site
+Sites,DELETE /sites/{id},✓,✗,✗,✗,✗,✗,✗,Delete site
+Sites,GET /sites/{id}/users,✓,✓,✓ (managed only),✓ (assigned only),✗,✗,✗,Get site users
+Sites,POST /sites/{id}/users,✓,✓,✓ (managed only),✗,✗,✗,✗,Assign user to site
+Roles,GET /roles,✓,✓,✓,✗,✗,✗,✗,List roles
+Roles,POST /roles,✓,✗,✗,✗,✗,✗,✗,Create role
+Roles,GET /roles/{id},✓,✓,✓,✓,✗,✗,✗,Get role details
+Roles,PUT /roles/{id},✓,✗,✗,✗,✗,✗,✗,Update role
+Roles,DELETE /roles/{id},✓,✗,✗,✗,✗,✗,✗,Delete role
+Permissions,GET /permissions,✓,✓,✓,✗,✗,✗,✗,List permissions
+Permissions,POST /permissions,✓,✗,✗,✗,✗,✗,✗,Create permission
+Permissions,GET /permissions/{id},✓,✓,✓,✗,✗,✗,✗,Get permission details
+Permissions,PUT /permissions/{id},✓,✗,✗,✗,✗,✗,✗,Update permission
+Permissions,DELETE /permissions/{id},✓,✗,✗,✗,✗,✗,✗,Delete permission
+Issues,GET /issues,✓,✓,✓ (site only),✓ (site only),✓ (assigned only),✓ (assigned only),✗,List issues
+Issues,POST /issues,✓,✓,✓,✓,✓,✓,✗,Create issue
+Issues,GET /issues/{id},✓,✓,✓ (site only),✓ (site only),✓ (involved only),✓ (involved only),✗,Get issue details
+Issues,PUT /issues/{id},✓,✓,✓ (site only),✓ (assigned only),✓ (assigned only),✓ (assigned only),✗,Update issue
+Issues,DELETE /issues/{id},✓,✓,✗,✗,✗,✗,✗,Delete issue
+Issues,POST /issues/{id}/assign,✓,✓,✓ (site only),✓,✗,✗,✗,Assign issue
+Issues,POST /issues/{id}/resolve,✓,✓,✓ (site only),✓,✓ (assigned only),✓ (assigned only),✗,Resolve issue
+Issues,GET /issues/{id}/evidence,✓,✓,✓ (site only),✓ (site only),✓ (involved only),✓ (involved only),✗,Get issue evidence
+Issues,POST /issues/{id}/evidence,✓,✓,✓,✓,✓,✓,✗,Add issue evidence
+Incidents,GET /mobile/v1/incidents,✓,✓,✓ (site only),✓ (site only),✓,✓,✗,List incidents (mobile)
+Incidents,POST /mobile/v1/incidents,✓,✓,✓,✓,✓,✓,✗,Create incident (mobile)
+Incidents,GET /mobile/v1/incidents/{id},✓,✓,✓ (site only),✓ (site only),✓ (involved only),✓ (involved only),✗,Get incident (mobile)
+Incidents,PUT /mobile/v1/incidents/{id},✓,✓,✓ (site only),✓ (site only),✓ (assigned only),✓ (assigned only),✗,Update incident (mobile)
+Checkpoints,GET /checkpoints,✓,✓,✓ (site only),✓ (site only),✓ (site only),✓ (site only),✗,List checkpoints
+Checkpoints,POST /checkpoints,✓,✓,✓ (site only),✗,✗,✗,✗,Create checkpoint
+Checkpoints,GET /checkpoints/{id},✓,✓,✓ (site only),✓ (site only),✓ (site only),✓ (site only),✗,Get checkpoint details
+Checkpoints,PUT /checkpoints/{id},✓,✓,✓ (site only),✗,✗,✗,✗,Update checkpoint
+Checkpoints,DELETE /checkpoints/{id},✓,✓,✗,✗,✗,✗,✗,Delete checkpoint
+Checkpoints,POST /checkpoints/{id}/visit,✓,✓,✓,✓,✓,✓,✗,Record checkpoint visit
+Checkpoints,GET /checkpoints/{id}/visits,✓,✓,✓ (site only),✓ (site only),✓ (own visits),✓ (own visits),✗,Get checkpoint visits
+Checkpoints,GET /checkpoints/statistics,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get checkpoint statistics
+Patrols,GET /patrols,✓,✓,✓ (site only),✓ (site only),✓ (assigned only),✓ (assigned only),✗,List patrols
+Patrols,POST /patrols,✓,✓,✓ (site only),✓,✗,✗,✗,Create patrol
+Patrols,GET /patrols/{id},✓,✓,✓ (site only),✓ (site only),✓ (assigned only),✓ (assigned only),✗,Get patrol details
+Patrols,PUT /patrols/{id},✓,✓,✓ (site only),✓,✓ (assigned only),✓ (assigned only),✗,Update patrol
+Patrols,DELETE /patrols/{id},✓,✓,✗,✗,✗,✗,✗,Delete patrol
+Patrols,POST /patrols/{id}/start,✓,✓,✓,✓,✓ (assigned only),✓ (assigned only),✗,Start patrol
+Patrols,POST /patrols/{id}/complete,✓,✓,✓,✓,✓ (assigned only),✓ (assigned only),✗,Complete patrol
+Patrols,GET /mobile/v1/patrols,✓,✓,✓ (site only),✓ (site only),✓,✓,✗,List patrols (mobile)
+Patrols,POST /mobile/v1/patrols/start,✓,✓,✓,✓,✓,✓,✗,Start patrol (mobile)
+Patrols,POST /mobile/v1/patrols/complete,✓,✓,✓,✓,✓,✓,✗,Complete patrol (mobile)
+Tasks,GET /tasks,✓,✓,✓ (site only),✓ (site only),✓ (assigned only),✓ (assigned only),✗,List tasks
+Tasks,POST /tasks,✓,✓,✓ (site only),✓,✗,✗,✗,Create task
+Tasks,GET /tasks/{id},✓,✓,✓ (site only),✓ (site only),✓ (assigned only),✓ (assigned only),✗,Get task details
+Tasks,PUT /tasks/{id},✓,✓,✓ (site only),✓,✓ (assigned only),✓ (assigned only),✗,Update task
+Tasks,DELETE /tasks/{id},✓,✓,✗,✗,✗,✗,✗,Delete task
+Tasks,POST /tasks/{id}/assign,✓,✓,✓ (site only),✓,✗,✗,✗,Assign task
+Tasks,POST /tasks/{id}/complete,✓,✓,✓,✓,✓ (assigned only),✓ (assigned only),✗,Complete task
+Shifts,GET /shifts,✓,✓,✓ (site only),✓ (site only),✓ (own shifts),✓ (own shifts),✗,List shifts
+Shifts,POST /shifts,✓,✓,✓ (site only),✓,✗,✗,✗,Create shift
+Shifts,GET /shifts/{id},✓,✓,✓ (site only),✓ (site only),✓ (own shift),✓ (own shift),✗,Get shift details
+Shifts,PUT /shifts/{id},✓,✓,✓ (site only),✓,✗,✗,✗,Update shift
+Shifts,DELETE /shifts/{id},✓,✓,✗,✗,✗,✗,✗,Delete shift
+Shifts,POST /shifts/{id}/checkin,✓,✓,✓,✓,✓ (assigned only),✓ (assigned only),✗,Check in to shift
+Shifts,POST /shifts/{id}/checkout,✓,✓,✓,✓,✓ (assigned only),✓ (assigned only),✗,Check out of shift
+Shifts,GET /shifts/active,✓,✓,✓ (site only),✓ (site only),✓ (own shifts),✓ (own shifts),✗,Get active shifts
+GPS,GET /gps/locations,✓,✓,✓ (site only),✓ (site only),✓ (own location),✓ (own location),✗,Get GPS locations
+GPS,POST /gps/locations,✓,✓,✓,✓,✓,✓,✗,Record GPS location
+GPS,GET /gps/locations/{user_id},✓,✓,✓ (site only),✓ (site only),✓ (self only),✓ (self only),✗,Get user GPS locations
+GPS,GET /gps/live,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get live GPS tracking
+Panic Alerts,GET /panic,✓,✓,✓ (site only),✓ (site only),✓ (own alerts),✓ (own alerts),✗,List panic alerts
+Panic Alerts,POST /panic,✓,✓,✓,✓,✓,✓,✗,Trigger panic alert
+Panic Alerts,GET /panic/{id},✓,✓,✓ (site only),✓ (site only),✓ (own alert),✓ (own alert),✗,Get panic alert details
+Panic Alerts,POST /panic/{id}/acknowledge,✓,✓,✓,✓,✗,✗,✗,Acknowledge panic alert
+Panic Alerts,POST /panic/{id}/resolve,✓,✓,✓,✓,✗,✗,✗,Resolve panic alert
+Panic Alerts,GET /mobile/v1/emergency/panic,✓,✓,✓ (site only),✓ (site only),✓,✓,✗,List panic alerts (mobile)
+Panic Alerts,POST /mobile/v1/emergency/panic,✓,✓,✓,✓,✓,✓,✗,Trigger panic alert (mobile)
+Messages,GET /messages,✓,✓,✓ (site only),✓ (site only),✓ (own messages),✓ (own messages),✗,List messages
+Messages,POST /messages,✓,✓,✓,✓,✓,✓,✗,Send message
+Messages,GET /messages/{id},✓,✓,✓ (site only),✓ (site only),✓ (participant only),✓ (participant only),✗,Get message details
+Messages,PUT /messages/{id}/read,✓,✓,✓,✓,✓,✓,✗,Mark message as read
+Messages,DELETE /messages/{id},✓,✓,✓ (site only),✗,✓ (own message),✓ (own message),✗,Delete message
+Notifications,GET /notifications,✓,✓,✓,✓,✓ (own notifications),✓ (own notifications),✗,List notifications
+Notifications,POST /notifications,✓,✓,✓,✓,✗,✗,✗,Create notification
+Notifications,GET /notifications/{id},✓,✓,✓ (site only),✓ (site only),✓ (own notification),✓ (own notification),✗,Get notification details
+Notifications,PUT /notifications/{id}/read,✓,✓,✓,✓,✓ (own notification),✓ (own notification),✗,Mark notification as read
+Notifications,DELETE /notifications/{id},✓,✓,✓ (site only),✗,✓ (own notification),✓ (own notification),✗,Delete notification
+Analytics,GET /analytics,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get analytics overview
+Analytics,GET /analytics/patrol-efficiency,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get patrol efficiency report
+Analytics,GET /analytics/incident-trends,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get incident trends analysis
+Analytics,GET /analytics/guard-performance/{id},✓,✓,✓ (site only),✓ (site only),✓ (self only),✓ (self only),✗,Get guard performance metrics
+Analytics,GET /analytics/site-security/{id},✓,✓,✓ (managed only),✓ (assigned only),✗,✗,✗,Get site security score
+Analytics,POST /analytics/reports/generate,✓,✓,✓ (site only),✗,✗,✗,✗,Generate custom report
+Analytics,POST /analytics/reports/export/pdf,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Export report as PDF
+Analytics,POST /analytics/reports/export/csv,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Export data as CSV
+Analytics,POST /analytics/reports/schedule,✓,✓,✗,✗,✗,✗,✗,Schedule recurring report
+Dashboards,GET /dashboards,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,List dashboards
+Dashboards,POST /dashboards,✓,✓,✓,✗,✗,✗,✗,Create dashboard
+Dashboards,GET /dashboards/{id},✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get dashboard details
+Dashboards,PUT /dashboards/{id},✓,✓,✓ (owned only),✗,✗,✗,✗,Update dashboard
+Dashboards,DELETE /dashboards/{id},✓,✓,✓ (owned only),✗,✗,✗,✗,Delete dashboard
+Settings,GET /settings,✓,✓,✓ (public only),✓ (public only),✓ (public only),✓ (public only),✓ (public only),List system settings
+Settings,POST /settings,✓,✗,✗,✗,✗,✗,✗,Create system setting
+Settings,GET /settings/{key},✓,✓,✓ (public only),✓ (public only),✓ (public only),✓ (public only),✓ (public only),Get system setting
+Settings,PUT /settings/{key},✓,✓ (editable only),✗,✗,✗,✗,✗,Update system setting
+Settings,DELETE /settings/{key},✓,✗,✗,✗,✗,✗,✗,Delete system setting
+Audit,GET /audit,✓,✓,✓ (site only),✗,✗,✗,✗,List audit logs
+Audit,GET /audit/{id},✓,✓,✓ (site only),✗,✗,✗,✗,Get audit log details
+Audit,GET /audit/user/{user_id},✓,✓,✓ (site only),✗,✓ (self only),✓ (self only),✗,Get user audit logs
+Audit,GET /audit/resource/{type}/{id},✓,✓,✓ (site only),✗,✗,✗,✗,Get resource audit logs
+Files,GET /files,✓,✓,✓ (site only),✓ (site only),✓ (own files),✓ (own files),✗,List files
+Files,POST /files/upload,✓,✓,✓,✓,✓,✓,✗,Upload file
+Files,GET /files/{id},✓,✓,✓ (site only),✓ (site only),✓ (own file),✓ (own file),✗,Get file details
+Files,GET /files/{id}/download,✓,✓,✓ (site only),✓ (site only),✓ (own file),✓ (own file),✗,Download file
+Files,DELETE /files/{id},✓,✓,✓ (site only),✗,✓ (own file),✓ (own file),✗,Delete file
+Files,PUT /files/{id}/metadata,✓,✓,✓ (site only),✗,✓ (own file),✓ (own file),✗,Update file metadata
+Visitors,GET /visitors,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,List visitors
+Visitors,POST /visitors,✓,✓,✓,✓,✓,✓,✓,Check in visitor
+Visitors,GET /visitors/{id},✓,✓,✓ (site only),✓ (site only),✓ (hosted only),✓ (hosted only),✓ (self only),Get visitor details
+Visitors,PUT /visitors/{id},✓,✓,✓ (site only),✗,✓ (hosted only),✓ (hosted only),✗,Update visitor
+Visitors,POST /visitors/{id}/checkout,✓,✓,✓,✓,✓,✓,✓,Check out visitor
+Events,GET /events,✓,✓,✓ (site only),✓ (site only),✓ (involved only),✓ (involved only),✗,List events
+Events,POST /events,✓,✓,✓,✓,✓,✓,✗,Create event
+Events,GET /events/{id},✓,✓,✓ (site only),✓ (site only),✓ (involved only),✓ (involved only),✗,Get event details
+Events,GET /events/live,✓,✓,✓ (site only),✓ (site only),✓ (involved only),✓ (involved only),✗,Get live events
+Integrations,GET /integrations/webhooks,✓,✓,✗,✗,✗,✗,✗,List webhooks
+Integrations,POST /integrations/webhooks,✓,✓,✗,✗,✗,✗,✗,Create webhook
+Integrations,GET /integrations/webhooks/{id},✓,✓,✗,✗,✗,✗,✗,Get webhook details
+Integrations,PUT /integrations/webhooks/{id},✓,✓,✗,✗,✗,✗,✗,Update webhook
+Integrations,DELETE /integrations/webhooks/{id},✓,✓,✗,✗,✗,✗,✗,Delete webhook
+Integrations,POST /integrations/webhooks/{id}/test,✓,✓,✗,✗,✗,✗,✗,Test webhook
+Performance,GET /performance/metrics,✓,✓,✓ (site only),✗,✗,✗,✗,Get performance metrics
+Performance,GET /performance/health,✓,✓,✓,✓,✓,✓,✓,Get system health
+Performance,GET /mobile/v1/performance/metrics,✓,✓,✓ (site only),✓ (site only),✓,✓,✗,Get performance metrics (mobile)
+Live Monitoring,GET /live/status,✓,✓,✓ (site only),✓ (site only),✓ (site only),✓ (site only),✗,Get live status
+Live Monitoring,GET /live/guards,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get live guard status
+Live Monitoring,GET /live/incidents,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get live incidents
+Live Monitoring,GET /live/patrols,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Get live patrols
+WebSocket,WS /ws/connect,✓,✓,✓,✓,✓,✓,✗,WebSocket connection
+WebSocket,WS /ws/broadcast,✓,✓,✓ (site only),✓ (site only),✗,✗,✗,Broadcast message
+WebSocket,WS /ws/notifications,✓,✓,✓,✓,✓,✓,✗,Real-time notifications
+WebSocket,WS /ws/tracking,✓,✓,✓ (site only),✓ (site only),✓ (own tracking),✓ (own tracking),✗,Real-time tracking
+Mobile Sync,GET /mobile/v1/sync/status,✓,✓,✓ (site only),✓ (site only),✓,✓,✗,Get sync status (mobile)
+Mobile Sync,POST /mobile/v1/sync/upload,✓,✓,✓,✓,✓,✓,✗,Upload offline data (mobile)
+Mobile Sync,GET /mobile/v1/sync/download,✓,✓,✓ (site only),✓ (site only),✓,✓,✗,Download updates (mobile)
+Mobile Auth,POST /mobile/v1/auth/login,✓,✓,✓,✓,✓,✓,✗,Mobile login
+Mobile Auth,POST /mobile/v1/auth/refresh,✓,✓,✓,✓,✓,✓,✗,Mobile token refresh
+Mobile Auth,POST /mobile/v1/auth/device-register,✓,✓,✓,✓,✓,✓,✗,Register mobile device
+Mobile Auth,POST /mobile/v1/auth/logout,✓,✓,✓,✓,✓,✓,✗,Mobile logout
