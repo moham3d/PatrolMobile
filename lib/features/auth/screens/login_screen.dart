@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/constants/app_constants.dart';
 
 /// Login screen for authentication
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -24,6 +27,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authNotifierProvider);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
+    
+    // Listen to authentication state changes
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      if (next is Authenticated) {
+        context.go(AppConstants.dashboardRoute);
+      } else if (next is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -99,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleLogin(),
+                  onFieldSubmitted: (_) => _handleLogin(ref.read(authNotifierProvider.notifier)),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
@@ -112,8 +132,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 // Login button
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading
+                  onPressed: (authState is Loading) ? null : () => _handleLogin(authNotifier),
+                  child: (authState is Loading)
                       ? const SizedBox(
                           height: 20,
                           width: 20,
@@ -124,11 +144,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 16),
                 
-                // Biometric login button (placeholder)
-                OutlinedButton.icon(
-                  onPressed: _handleBiometricLogin,
-                  icon: const Icon(Icons.fingerprint),
-                  label: const Text('Login with Biometrics'),
+                // Biometric login button
+                FutureBuilder<bool>(
+                  future: authNotifier.isBiometricAvailable(),
+                  builder: (context, snapshot) {
+                    if (snapshot.data == true) {
+                      return OutlinedButton.icon(
+                        onPressed: (authState is Loading) ? null : () => _handleBiometricLogin(authNotifier),
+                        icon: const Icon(Icons.fingerprint),
+                        label: const Text('Login with Biometrics'),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
                 
                 const SizedBox(height: 24),
@@ -147,51 +175,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() async {
+  void _handleLogin(AuthNotifier authNotifier) async {
     if (!_formKey.currentState!.validate()) return;
     
-    setState(() {
-      _isLoading = true;
-    });
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
     
-    try {
-      // TODO: Implement actual authentication
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
-      if (mounted) {
-        // TODO: Navigate to dashboard after successful login
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login functionality will be implemented'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    await authNotifier.login(username, password);
   }
 
-  void _handleBiometricLogin() {
-    // TODO: Implement biometric authentication
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Biometric authentication will be implemented'),
-        backgroundColor: Colors.orange,
-      ),
-    );
+  void _handleBiometricLogin(AuthNotifier authNotifier) async {
+    await authNotifier.loginWithBiometric();
   }
 }

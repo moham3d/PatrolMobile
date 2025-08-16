@@ -1,36 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/models/user.dart';
 
 /// Main dashboard screen for authenticated users
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
+    
+    // Handle auth state changes
+    if (authState is! Authenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go(AppConstants.loginRoute);
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('PatrolShield Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => _handleLogout(context),
+            onPressed: () => _handleLogout(authNotifier),
           ),
         ],
       ),
-      body: const DashboardBody(),
-      floatingActionButton: SOSFloatingActionButton(),
+      body: DashboardBody(user: authState.user),
+      floatingActionButton: const SOSFloatingActionButton(),
     );
   }
 
-  void _handleLogout(BuildContext context) {
-    // TODO: Implement logout functionality
-    context.go('/login');
+  void _handleLogout(AuthNotifier authNotifier) {
+    authNotifier.logout();
   }
 }
 
 /// Dashboard body content
 class DashboardBody extends StatelessWidget {
-  const DashboardBody({super.key});
+  final User user;
+  
+  const DashboardBody({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +58,7 @@ class DashboardBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome section
-          _buildWelcomeCard(context),
+          _buildWelcomeCard(context, user),
           const SizedBox(height: 16),
           
           // Quick actions
@@ -58,7 +76,10 @@ class DashboardBody extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeCard(BuildContext context) {
+  Widget _buildWelcomeCard(BuildContext context, User user) {
+    final roleDisplayName = _getRoleDisplayName(user.role);
+    final statusColor = _getStatusColor(user.role);
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -67,9 +88,18 @@ class DashboardBody extends StatelessWidget {
           children: [
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 24,
-                  child: Icon(Icons.person),
+                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                  child: Text(
+                    user.firstName.isNotEmpty && user.lastName.isNotEmpty
+                        ? '${user.firstName[0]}${user.lastName[0]}'
+                        : user.username[0].toUpperCase(),
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -77,12 +107,14 @@ class DashboardBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Welcome, Guard', // TODO: Get from user data
+                        'Welcome, ${user.displayName.isNotEmpty ? user.displayName : user.username}',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
-                        'Ready for duty',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        roleDisplayName,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ],
                   ),
@@ -90,13 +122,13 @@ class DashboardBody extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
+                  child: Text(
                     'On Duty',
                     style: TextStyle(
-                      color: Colors.green,
+                      color: statusColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -107,6 +139,38 @@ class DashboardBody extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getRoleDisplayName(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return 'System Administrator';
+      case 'site manager':
+        return 'Site Manager';
+      case 'supervisor':
+        return 'Security Supervisor';
+      case 'guard':
+      case 'mobile guard':
+        return 'Security Guard';
+      default:
+        return role;
+    }
+  }
+
+  Color _getStatusColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return Colors.purple;
+      case 'site manager':
+        return Colors.blue;
+      case 'supervisor':
+        return Colors.orange;
+      case 'guard':
+      case 'mobile guard':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildQuickActions(BuildContext context) {
@@ -126,7 +190,7 @@ class DashboardBody extends StatelessWidget {
                 icon: Icons.qr_code_scanner,
                 title: 'Scan Checkpoint',
                 subtitle: 'QR/NFC Scanner',
-                onTap: () => context.go('/scanner'),
+                onTap: () => context.go(AppConstants.scannerRoute),
               ),
             ),
             const SizedBox(width: 12),
@@ -308,10 +372,12 @@ class DashboardBody extends StatelessWidget {
 
 /// Emergency SOS floating action button
 class SOSFloatingActionButton extends StatelessWidget {
+  const SOSFloatingActionButton({super.key});
+  
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton.extended(
-      onPressed: () => context.go('/sos'),
+      onPressed: () => context.go(AppConstants.sosRoute),
       backgroundColor: Colors.red,
       foregroundColor: Colors.white,
       icon: const Icon(Icons.emergency),

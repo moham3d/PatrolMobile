@@ -1,50 +1,64 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/emergency/screens/sos_screen.dart';
 import '../../features/checkpoints/screens/scanner_screen.dart';
+import '../providers/auth_provider.dart';
+import '../constants/app_constants.dart';
 
 /// App routing configuration using GoRouter
 class AppRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/login',
+  static GoRouter router(WidgetRef ref) => GoRouter(
+    initialLocation: AppConstants.loginRoute,
+    redirect: (context, state) {
+      final authState = ref.read(authNotifierProvider);
+      final isAuthenticated = authState is Authenticated;
+      final isLoginRoute = state.fullPath == AppConstants.loginRoute;
+
+      // If not authenticated and not on login route, redirect to login
+      if (!isAuthenticated && !isLoginRoute) {
+        return AppConstants.loginRoute;
+      }
+
+      // If authenticated and on login route, redirect to dashboard
+      if (isAuthenticated && isLoginRoute) {
+        return AppConstants.dashboardRoute;
+      }
+
+      // No redirect needed
+      return null;
+    },
     routes: [
       // Authentication routes
       GoRoute(
-        path: '/login',
+        path: AppConstants.loginRoute,
         name: 'login',
         builder: (context, state) => const LoginScreen(),
       ),
       
-      // Main app routes
+      // Main app routes (protected)
       GoRoute(
-        path: '/dashboard',
+        path: AppConstants.dashboardRoute,
         name: 'dashboard',
         builder: (context, state) => const DashboardScreen(),
       ),
       
       // Emergency routes
       GoRoute(
-        path: '/sos',
+        path: AppConstants.sosRoute,
         name: 'sos',
         builder: (context, state) => const SOSScreen(),
       ),
       
       // Checkpoint routes
       GoRoute(
-        path: '/scanner',
+        path: AppConstants.scannerRoute,
         name: 'scanner',
         builder: (context, state) => const ScannerScreen(),
       ),
     ],
-    
-    // Redirect logic for authentication
-    redirect: (context, state) {
-      // TODO: Implement authentication check
-      // For now, allow all routes
-      return null;
-    },
     
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -68,7 +82,7 @@ class AppRouter {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.go('/dashboard'),
+              onPressed: () => context.go(AppConstants.dashboardRoute),
               child: const Text('Go to Dashboard'),
             ),
           ],

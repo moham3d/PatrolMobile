@@ -26,6 +26,16 @@ class AppConstants {
   
   // Storage keys
   static const String authTokenKey = 'auth_token';
+  static const String refreshTokenKey = 'refresh_token';
+  static const String userDataKey = 'user_data';
+  static const String biometricEnabledKey = 'biometric_enabled';
+  
+  // Routes
+  static const String loginRoute = '/login';
+  static const String dashboardRoute = '/dashboard';
+  static const String sosRoute = '/sos';
+  static const String scannerRoute = '/scanner';
+  static const String authTokenKey = 'auth_token';
   static const String userRoleKey = 'user_role';
   static const String biometricEnabledKey = 'biometric_enabled';
   
