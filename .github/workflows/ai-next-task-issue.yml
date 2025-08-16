@@ -1,0 +1,45 @@
+name: AI Agent Next Task Issue
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  next-task:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Parse next unchecked checklist item
+      id: checklist
+      run: |
+        file=".github/mobile-development-instructions.md"
+        line=$(grep -n '^\[ \]' $file | head -n 1 | cut -d: -f1)
+        if [ -z "$line" ]; then
+          echo "has_next=false" >> $GITHUB_OUTPUT
+        else
+          item=$(sed -n "${line}p" $file | sed 's/^\[ \] //')
+          echo "item=$item" >> $GITHUB_OUTPUT
+          echo "line=$line" >> $GITHUB_OUTPUT
+          echo "has_next=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create issue for next checklist item
+      if: steps.checklist.outputs.has_next == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `AI Agent: Next Task - ${process.env['item']}`,
+            body: `Proceed to the next checklist item from .github/mobile-development-instructions.md:\n\n${process.env['item']}\n\nWhen complete, open a PR and wait for merge before moving to the next item.`
+          })
+
+    - name: All checklist items done
+      if: steps.checklist.outputs.has_next != 'true'
+      run: echo "✅ All checklist items complete."
