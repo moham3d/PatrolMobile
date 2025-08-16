@@ -35,9 +35,9 @@ class AppConstants {
   static const String dashboardRoute = '/dashboard';
   static const String sosRoute = '/sos';
   static const String scannerRoute = '/scanner';
-  static const String authTokenKey = 'auth_token';
+  
+  // Additional storage keys
   static const String userRoleKey = 'user_role';
-  static const String biometricEnabledKey = 'biometric_enabled';
   
   // User roles
   static const String roleGuard = 'guard';
