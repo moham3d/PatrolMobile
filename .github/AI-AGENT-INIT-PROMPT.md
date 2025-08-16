@@ -137,4 +137,14 @@ The app is successful when:
 2. Start with the first unchecked item—read, build, test, check off
 3. Every feature must be reliable and ready for real emergencies
 
+## 🔄 Automated Sequential Workflow for Copilot Agents
+
+1. **Complete the current checklist item and open a PR.**
+2. **Wait for the PR to be reviewed and merged** into the main branch.
+3. **Once merged,** automatically proceed to the next unchecked checklist item in `.github/mobile-development-instructions.md`.
+4. **Always start each new item from the latest main branch.**
+5. **Repeat until all checklist items are completed.**
+
+> **Do not skip steps. Do not start the next task before merge. This guarantees every stage is reviewable, auditable, and production-ready.**
+
 *This is a safety-critical app. Every line of code must be production-grade. Guards’ safety depends on your reliability.*
