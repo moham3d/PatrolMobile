@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/providers/emergency_provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/constants/app_constants.dart';
 
 /// Emergency SOS screen for triggering panic alerts
-class SOSScreen extends StatefulWidget {
+class SOSScreen extends ConsumerStatefulWidget {
   const SOSScreen({super.key});
 
   @override
-  State<SOSScreen> createState() => _SOSScreenState();
+  ConsumerState<SOSScreen> createState() => _SOSScreenState();
 }
 
-class _SOSScreenState extends State<SOSScreen>
+class _SOSScreenState extends ConsumerState<SOSScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
-  bool _isTriggering = false;
-  bool _isTriggered = false;
 
   @override
   void initState() {
@@ -41,6 +43,35 @@ class _SOSScreenState extends State<SOSScreen>
 
   @override
   Widget build(BuildContext context) {
+    final emergencyState = ref.watch(emergencyAlertsProvider);
+    final emergencyNotifier = ref.read(emergencyAlertsProvider.notifier);
+    final currentUser = ref.watch(currentUserProvider2);
+    
+    // Listen to emergency state changes
+    ref.listen<EmergencyAlertsState>(emergencyAlertsProvider, (previous, next) {
+      if (next is Triggered) {
+        _animationController.stop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Emergency alert sent! Alert ID: ${next.alert.id}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } else if (next is EmergencyError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Emergency alert failed: ${next.message}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    });
+
+    final isTriggering = emergencyState is Triggering;
+    final isTriggered = emergencyState is Triggered;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Emergency SOS'),
@@ -58,7 +89,7 @@ class _SOSScreenState extends State<SOSScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (!_isTriggered) ...[
+              if (!isTriggered) ...[ 
                 // Emergency instruction
                 Text(
                   'Emergency Assistance',
@@ -83,9 +114,9 @@ class _SOSScreenState extends State<SOSScreen>
                   animation: _pulseAnimation,
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: _pulseAnimation.value,
+                      scale: isTriggering ? _pulseAnimation.value : 1.0,
                       child: GestureDetector(
-                        onTap: _isTriggering ? null : _triggerSOS,
+                        onTap: isTriggering ? null : () => _triggerSOS(emergencyNotifier),
                         child: Container(
                           width: 200,
                           height: 200,
@@ -100,7 +131,7 @@ class _SOSScreenState extends State<SOSScreen>
                               ),
                             ],
                           ),
-                          child: _isTriggering
+                          child: isTriggering
                               ? const Center(
                                   child: CircularProgressIndicator(
                                     color: Colors.white,
@@ -194,42 +225,63 @@ class _SOSScreenState extends State<SOSScreen>
                 ),
                 const SizedBox(height: 32),
                 
-                // Status card
-                Card(
-                  color: Colors.green.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Location shared: GPS coordinates sent',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                // Status card with real alert data
+                if (emergencyState is Triggered) 
+                  Card(
+                    color: Colors.green.shade50,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildAlertInfoRow(
+                            Icons.emergency, 
+                            'Alert ID', 
+                            '#${emergencyState.alert.id}',
+                            Colors.green,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildAlertInfoRow(
+                            Icons.security, 
+                            'Severity', 
+                            emergencyState.alert.severity.toUpperCase(),
+                            emergencyState.alert.severityColor,
+                          ),
+                          const SizedBox(height: 8),
+                          if (emergencyState.alert.latitude != null && emergencyState.alert.longitude != null)
+                            _buildAlertInfoRow(
+                              Icons.location_on, 
+                              'Location', 
+                              'GPS: ${emergencyState.alert.latitude!.toStringAsFixed(6)}, ${emergencyState.alert.longitude!.toStringAsFixed(6)}',
+                              Colors.green,
+                            ),
+                          if (emergencyState.alert.locationName != null) ...[
+                            const SizedBox(height: 8),
+                            _buildAlertInfoRow(
+                              Icons.place, 
+                              'Location Name', 
+                              emergencyState.alert.locationName!,
+                              Colors.green,
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.access_time, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Alert sent: ${DateTime.now().toString().substring(0, 19)}',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          _buildAlertInfoRow(
+                            Icons.access_time, 
+                            'Alert Time', 
+                            emergencyState.alert.triggeredAt.substring(0, 19).replaceAll('T', ' '),
+                            Colors.green,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildAlertInfoRow(
+                            Icons.person, 
+                            'Status', 
+                            emergencyState.alert.status.toUpperCase(),
+                            emergencyState.alert.isActive ? Colors.red : Colors.green,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 
                 const SizedBox(height: 24),
                 
@@ -238,7 +290,7 @@ class _SOSScreenState extends State<SOSScreen>
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => context.go('/dashboard'),
+                        onPressed: () => context.go(AppConstants.dashboardRoute),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -249,7 +301,7 @@ class _SOSScreenState extends State<SOSScreen>
                     const SizedBox(width: 16),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: _cancelAlert,
+                        onPressed: () => _cancelAlert(emergencyNotifier),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                         ),
@@ -266,62 +318,38 @@ class _SOSScreenState extends State<SOSScreen>
     );
   }
 
-  void _triggerSOS() async {
-    setState(() {
-      _isTriggering = true;
-    });
-
-    try {
-      // TODO: Implement actual SOS trigger with API call
-      // This should:
-      // 1. Get current GPS location
-      // 2. Send emergency alert to backend
-      // 3. Notify supervisors via WebSocket
-      // 4. Start location tracking
-      
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
-      if (mounted) {
-        setState(() {
-          _isTriggering = false;
-          _isTriggered = true;
-        });
-        
-        // Stop the pulsing animation
-        _animationController.stop();
-        
-        // Show success feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Emergency alert sent successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isTriggering = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send emergency alert: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+  /// Trigger SOS emergency alert using real API
+  void _triggerSOS(EmergencyAlertsNotifier emergencyNotifier) async {
+    // Start the pulsing animation
+    _animationController.repeat(reverse: true);
+    
+    // Get current user for description
+    final currentUser = ref.read(currentUserProvider2);
+    final description = currentUser != null 
+        ? 'SOS emergency alert from ${currentUser.displayName} (${currentUser.role})'
+        : 'SOS emergency alert from mobile app';
+    
+    // Trigger the emergency alert
+    final alert = await emergencyNotifier.triggerSOS(description: description);
+    
+    if (alert != null) {
+      // Stop animation on success - will be handled by state listener
+      _animationController.stop();
     }
   }
 
-  void _cancelAlert() {
-    // TODO: Implement alert cancellation
+  /// Cancel active emergency alert
+  void _cancelAlert(EmergencyAlertsNotifier emergencyNotifier) {
+    final emergencyState = ref.read(emergencyAlertsProvider);
+    
+    if (emergencyState is! Triggered) return;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancel Emergency Alert'),
-        content: const Text(
-          'Are you sure you want to cancel this emergency alert? '
+        content: Text(
+          'Are you sure you want to cancel emergency alert #${emergencyState.alert.id}? '
           'This will notify supervisors that the emergency has been resolved.',
         ),
         actions: [
@@ -330,15 +358,90 @@ class _SOSScreenState extends State<SOSScreen>
             child: const Text('Keep Alert'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              context.go('/dashboard');
+              
+              // Show reason dialog
+              final reason = await _showReasonDialog();
+              if (reason != null) {
+                await emergencyNotifier.cancelAlert(
+                  emergencyState.alert.id, 
+                  reason: reason,
+                );
+                if (mounted) {
+                  context.go(AppConstants.dashboardRoute);
+                }
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Cancel Alert'),
           ),
         ],
       ),
+    );
+  }
+
+  /// Show dialog to get cancellation reason
+  Future<String?> _showReasonDialog() async {
+    final controller = TextEditingController();
+    
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancellation Reason'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Please provide a reason for cancelling the emergency alert:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'e.g., False alarm, situation resolved',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final reason = controller.text.trim();
+              Navigator.of(context).pop(reason.isNotEmpty ? reason : 'Cancelled by user');
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build alert information row
+  Widget _buildAlertInfoRow(IconData icon, String label, String value, Color iconColor) {
+    return Row(
+      children: [
+        Icon(icon, color: iconColor, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium,
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
