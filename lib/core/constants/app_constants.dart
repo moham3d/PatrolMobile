@@ -45,6 +45,11 @@ class AppConstants {
   static const String emergencyContactsRoute = '/emergency-contacts';
   static const String emergencyCancelResolveRoute = '/emergency/cancel-resolve';
   
+  // Incident routes
+  static const String incidentReportRoute = '/incident-report';
+  static const String incidentListRoute = '/incidents';
+  static const String incidentDetailRoute = '/incident';
+  
   // Patrol routes
   static const String patrolProgressRoute = '/patrol-progress';
   static const String patrolDetailRoute = '/patrol';
