@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/performance_provider.dart';
+import '../../../core/providers/intelligent_sync_provider.dart';
 
 /// Performance monitoring and optimization screen
 class PerformanceMonitoringScreen extends ConsumerStatefulWidget {
@@ -71,6 +72,11 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
             
             // Sync Status Card
             _buildSyncStatusCard(context, syncStats),
+            
+            const SizedBox(height: 16),
+            
+            // Intelligent Sync Card
+            _buildIntelligentSyncCard(context),
             
             const SizedBox(height: 16),
             
@@ -345,6 +351,255 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
         ),
       ),
     );
+  }
+
+  Widget _buildIntelligentSyncCard(BuildContext context) {
+    final syncStatistics = ref.watch(autoRefreshSyncStatisticsProvider);
+    final syncControl = ref.watch(syncControlProvider);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.sync_alt,
+                  color: Colors.blue.shade600,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Intelligent Sync',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                syncStatistics.when(
+                  data: (stats) {
+                    final isOptimized = (stats['current_interval_minutes'] as int) > 15;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isOptimized ? Colors.green.shade100 : Colors.blue.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isOptimized ? 'Optimized' : 'Standard',
+                        style: TextStyle(
+                          color: isOptimized ? Colors.green.shade700 : Colors.blue.shade700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (_, __) => Icon(Icons.error, color: Colors.red.shade400, size: 16),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            syncStatistics.when(
+              data: (stats) => Column(
+                children: [
+                  _buildSyncStatRow('Sync Interval', '${stats['current_interval_minutes']} minutes'),
+                  _buildSyncStatRow('Battery Level', '${stats['battery_level']}%'),
+                  _buildSyncStatRow('Low Power Mode', stats['is_low_power_mode'] ? 'Yes' : 'No'),
+                  _buildSyncStatRow('Connectivity', _formatConnectivity(stats['connectivity'])),
+                  _buildSyncStatRow('Status', stats['is_initialized'] ? 'Active' : 'Inactive'),
+                ],
+              ),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, _) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Error loading sync stats: $error',
+                  style: TextStyle(color: Colors.red.shade600),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Sync Control Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: syncControl.isLoading ? null : () {
+                      ref.read(syncControlProvider.notifier).triggerSync(criticalOnly: true, reason: 'manual_critical');
+                    },
+                    icon: const Icon(Icons.priority_high),
+                    label: const Text('Critical Sync'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red.shade600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: syncControl.isLoading ? null : () {
+                      ref.read(syncControlProvider.notifier).triggerSync(reason: 'manual_full');
+                    },
+                    icon: const Icon(Icons.sync),
+                    label: const Text('Full Sync'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Show sync control status
+            syncControl.when(
+              data: (message) => message != null ? Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green.shade600, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => ref.read(syncControlProvider.notifier).clearStatus(),
+                        icon: Icon(Icons.close, size: 16, color: Colors.green.shade600),
+                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
+                ),
+              ) : const SizedBox.shrink(),
+              loading: () => Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.blue.shade600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Processing sync request...',
+                        style: TextStyle(
+                          color: Colors.blue.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              error: (error, _) => Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: Colors.red.shade600, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Sync failed: $error',
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => ref.read(syncControlProvider.notifier).clearStatus(),
+                        icon: Icon(Icons.close, size: 16, color: Colors.red.shade600),
+                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSyncStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatConnectivity(dynamic connectivity) {
+    if (connectivity == null) return 'Unknown';
+    return connectivity.toString().split('.').last.replaceAll('_', ' ').toUpperCase();
   }
 
   Widget _buildActionButtons(BuildContext context) {

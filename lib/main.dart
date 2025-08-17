@@ -13,6 +13,8 @@ import 'core/services/sync_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/messaging_service.dart';
 import 'core/services/location_sharing_service.dart';
+import 'core/services/intelligent_sync_scheduling_service.dart';
+import 'core/services/performance_monitoring_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +43,12 @@ void main() async {
   
   // Initialize location sharing service
   await LocationSharingService.instance.initialize();
+  
+  // Initialize performance monitoring service
+  await PerformanceMonitoringService.instance.initialize();
+  
+  // Initialize intelligent sync scheduling service
+  await IntelligentSyncSchedulingService.instance.initialize();
   
   runApp(
     const ProviderScope(

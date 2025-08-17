@@ -43,6 +43,7 @@ dependencies:
   sqflite: ^2.3.0
   hive: ^2.2.3
   connectivity_plus: ^5.0.1
+  workmanager: ^0.5.2
   
   # UI & UX
   flutter_map: ^6.1.0
