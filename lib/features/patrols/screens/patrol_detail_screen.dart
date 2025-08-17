@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../core/providers/patrol_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/patrol_simple.dart';
@@ -325,7 +326,6 @@ class _PatrolDetailScreenState extends ConsumerState<PatrolDetailScreen>
                     .toList(),
                 color: Theme.of(context).primaryColor,
                 strokeWidth: 3.0,
-                pattern: StrokePattern.dotted(),
               ),
             ],
           ),
