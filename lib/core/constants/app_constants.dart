@@ -23,6 +23,9 @@ class AppConstants {
   // Checkpoint endpoints
   static const String checkpointsEndpoint = '/checkpoints';
   static const String scanEndpoint = '/checkpoints/scan';
+  static const String verifyEndpoint = '/checkpoints/verify';
+  static const String visitsEndpoint = '/checkpoints/visits';
+  static const String statsEndpoint = '/checkpoints/stats';
   
   // Storage keys
   static const String authTokenKey = 'auth_token';
