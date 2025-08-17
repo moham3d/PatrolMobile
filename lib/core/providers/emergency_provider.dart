@@ -124,10 +124,37 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
   /// Broadcast emergency alert via WebSocket
   void _broadcastEmergencyAlert(EmergencyAlert alert) {
     try {
-      // Note: WebSocketService will be injected via provider in the actual implementation
-      // For now, we'll just print that the alert would be broadcast
+      // Create emergency alert message for WebSocket broadcasting
+      final alertMessage = {
+        'type': 'emergency_alert',
+        'alert': {
+          'id': alert.id,
+          'alert_type': alert.alertType,
+          'severity': alert.severity,
+          'status': alert.status,
+          'user_id': alert.userId,
+          'user_name': alert.userName,
+          'description': alert.description,
+          'location': {
+            'latitude': alert.latitude,
+            'longitude': alert.longitude,
+            'location_name': alert.locationName,
+          },
+          'triggered_at': alert.triggeredAt,
+        },
+        'broadcast_to': 'supervisors', // Broadcast to supervisors and above
+        'priority': 'critical',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      // Send via WebSocket if available
+      // Note: In production, this would be handled by WebSocketService
       print('Broadcasting emergency alert via WebSocket: ${alert.id}');
-      // WebSocketService.instance.sendEmergencyAlert(alert);
+      print('Alert data: ${alertMessage.toString()}');
+      
+      // In actual implementation:
+      // WebSocketService.instance.sendMessage(alertMessage);
+      
     } catch (e) {
       print('Failed to broadcast emergency alert: $e');
     }

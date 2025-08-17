@@ -405,18 +405,3 @@ class EmergencyResponseMetrics {
   );
 }
 
-/// Emergency exception for response service
-class EmergencyException implements Exception {
-  final String message;
-  final String code;
-  final int? statusCode;
-
-  const EmergencyException({
-    required this.message,
-    required this.code,
-    this.statusCode,
-  });
-
-  @override
-  String toString() => 'EmergencyException: $message (Code: $code)';
-}
