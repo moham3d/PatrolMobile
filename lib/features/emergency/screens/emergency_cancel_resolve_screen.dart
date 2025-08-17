@@ -316,7 +316,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
         
         // Existing follow-up actions
         if (_followUpActions.isNotEmpty) ...[
-          ...._followUpActions.map((action) => Padding(
+          ..._followUpActions.map((action) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Chip(
               label: Text(action),
