@@ -287,12 +287,7 @@ class DashboardBody extends ConsumerWidget {
       icon: Icons.report_problem,
       title: 'Report Incident',
       subtitle: 'Create Report',
-      onTap: () {
-        // TODO: Navigate to incident reporting
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Incident reporting coming soon')),
-        );
-      },
+      onTap: () => context.go(AppConstants.incidentReportRoute),
       enabled: true,
     ));
     

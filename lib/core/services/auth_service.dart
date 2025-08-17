@@ -21,6 +21,9 @@ class AuthService {
   /// Get current authenticated user
   User? get currentUser => _currentUser;
   
+  /// Get current authentication token
+  String? get currentToken => _currentToken;
+  
   /// Check if user is authenticated
   bool get isAuthenticated => _currentUser != null && _currentToken != null;
 

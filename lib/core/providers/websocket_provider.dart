@@ -22,13 +22,15 @@ final webSocketMessagesProvider = StreamProvider<WebSocketMessage>((ref) {
 /// Auto-connect WebSocket when user is authenticated
 final webSocketAutoConnectProvider = Provider<void>((ref) {
   final authState = ref.watch(authNotifierProvider);
-  final webSocketService = ref.read(webSocketServiceProvider);
+  final authService = ref.read(authServiceProvider);
   final connectionNotifier = ref.read(webSocketConnectionProvider.notifier);
   
   if (authState is Authenticated) {
     final user = authState.user;
-    final token = authState.token; // Use real token from auth state
-    connectionNotifier.connect(user.id.toString(), token);
+    final token = authService.currentToken; // Get token from auth service
+    if (token != null) {
+      connectionNotifier.connect(user.id.toString(), token);
+    }
   } else {
     connectionNotifier.disconnect();
   }

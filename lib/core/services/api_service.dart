@@ -53,11 +53,10 @@ class ApiService {
         
         // Convert DioError to custom ApiException
         final apiException = ApiException.fromDioError(error);
-        handler.reject(DioException.badResponse(
-          statusCode: error.response?.statusCode ?? 500,
+        handler.reject(DioException(
           requestOptions: error.requestOptions,
           response: error.response,
-          message: apiException.message,
+          error: apiException.message,
         ));
       },
     ));
