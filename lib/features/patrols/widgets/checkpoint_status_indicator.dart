@@ -164,6 +164,151 @@ class CheckpointStatusIndicator extends StatelessWidget {
 
   Widget _buildSingleCheckpointIndicator(BuildContext context) {
     final currentCheckpoint = checkpoint!;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _getBorderColor(),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Status icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _getStatusColor(),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getStatusIcon(),
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            
+            const SizedBox(width: 12),
+            
+            // Checkpoint info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    currentCheckpoint.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  
+                  if (_getStatusText().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _getStatusText(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: _getStatusColor(),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  
+                  if (currentCheckpoint.description != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      currentCheckpoint.description!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  
+                  // Checkpoint code
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.qr_code,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Code: ${currentCheckpoint.code}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Visit time if visited
+                  if (isVisited && currentCheckpoint.lastVisitAt != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Visited: ${currentCheckpoint.lastVisitAt}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            
+            // Scan button if enabled
+            if (showScanButton && !isVisited) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  // Navigate to scanner with this checkpoint
+                  // This would be handled by the parent widget through onTap
+                  onTap?.call();
+                },
+                icon: const Icon(Icons.qr_code_scanner),
+                style: IconButton.styleFrom(
+                  backgroundColor: isCurrent ? Colors.blue : Colors.grey.shade200,
+                  foregroundColor: isCurrent ? Colors.white : Colors.grey.shade600,
+                ),
+              ),
+            ],
+            
+            // Status indicator arrow
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Color _getStatusColor() {

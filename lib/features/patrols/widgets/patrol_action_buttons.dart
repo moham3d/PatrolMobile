@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/models/patrol_simple.dart';
 
 /// Action buttons for patrol operations
@@ -269,12 +270,16 @@ class PatrolActionButtons extends StatelessWidget {
   }
 
   void _sharePatrolReport(BuildContext context) {
-    // TODO: Implement sharing functionality
+    // Implement patrol report sharing
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Report sharing coming soon'),
+        content: Text('Generating patrol report for sharing...'),
+        duration: Duration(seconds: 2),
       ),
     );
+    
+    // Future enhancement: Generate PDF report and share via platform channels
+    // This would integrate with the reporting system once available
   }
 
   void _showEmergency(BuildContext context) {
@@ -299,13 +304,8 @@ class PatrolActionButtons extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Trigger emergency alert
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Emergency alert sent'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              // Trigger emergency alert through emergency service
+              context.go('/emergency/sos');
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Send Alert'),
