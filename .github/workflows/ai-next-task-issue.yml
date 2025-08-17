@@ -14,15 +14,20 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
+    - name: Debug checklist file
+      run: cat .github/mobile-development-instructions.md
+
     - name: Parse next unchecked checklist item
       id: checklist
       run: |
         file=".github/mobile-development-instructions.md"
-        line=$(grep -n '^\[ \]' $file | head -n 1 | cut -d: -f1)
+        # Find first unchecked item (allow leading spaces and dash)
+        line=$(grep -n '^[[:space:]]*-\s*\[ \]' $file | head -n 1 | cut -d: -f1)
         if [ -z "$line" ]; then
           echo "has_next=false" >> $GITHUB_OUTPUT
         else
-          item=$(sed -n "${line}p" $file | sed 's/^\[ \] //')
+          # Extract the checklist text after '- [ ] '
+          item=$(sed -n "${line}p" $file | sed 's/^[[:space:]]*-\s*\[ \] //')
           echo "item=$item" >> $GITHUB_OUTPUT
           echo "line=$line" >> $GITHUB_OUTPUT
           echo "has_next=true" >> $GITHUB_OUTPUT
@@ -33,11 +38,12 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
+          const itemText = process.env['item'] || '${{ steps.checklist.outputs.item }}';
           github.issues.create({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            title: `AI Agent: Next Task - ${process.env['item']}`,
-            body: `Proceed to the next checklist item from .github/mobile-development-instructions.md:\n\n${process.env['item']}\n\nWhen complete, open a PR and wait for merge before moving to the next item.`
+            title: `AI Agent: Next Task - ${itemText}`,
+            body: `Proceed to the next checklist item from .github/mobile-development-instructions.md:\n\n${itemText}\n\nWhen complete, open a PR and wait for merge before moving to the next item.`
           })
 
     - name: All checklist items done
