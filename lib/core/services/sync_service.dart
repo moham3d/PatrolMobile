@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../constants/app_constants.dart';
 import '../models/checkpoint.dart';
 import '../models/patrol_simple.dart';
+import '../models/sync_models.dart';
 import '../exceptions/api_exception.dart';
 import 'database_service.dart';
 import 'connectivity_service.dart';
@@ -386,6 +387,30 @@ class SyncService {
     }
     
     return await syncPendingData();
+  }
+
+  /// Sync a specific operation (used by background sync optimization)
+  Future<SyncResult> syncOperation(SyncOperation operation) async {
+    try {
+      final success = await _syncSingleItem({
+        'type': operation.type,
+        'data': operation.data,
+      });
+      
+      return SyncResult(
+        operation: operation,
+        success: success,
+        error: success ? null : 'Sync failed',
+        syncedAt: success ? DateTime.now() : null,
+      );
+    } catch (e) {
+      return SyncResult(
+        operation: operation,
+        success: false,
+        error: e.toString(),
+        syncedAt: null,
+      );
+    }
   }
 
   /// Clean up old data

@@ -262,7 +262,7 @@ class DatabaseService {
       'longitude': checkpoint.longitude,
       'is_active': checkpoint.isActive ? 1 : 0,
       'site_id': checkpoint.siteId,
-      'patrol_id': checkpoint.patrolId,
+      'patrol_id': null, // Checkpoints are not directly tied to patrols
       'created_at': checkpoint.createdAt,
       'updated_at': checkpoint.updatedAt,
       'cache_timestamp': DateTime.now().toIso8601String(),
@@ -323,7 +323,6 @@ class DatabaseService {
       longitude: data['longitude'] as double?,
       isActive: (data['is_active'] as int) == 1,
       siteId: data['site_id'] as int?,
-      patrolId: data['patrol_id'] as int?,
       createdAt: data['created_at'] as String,
       updatedAt: data['updated_at'] as String,
     );
