@@ -38,6 +38,7 @@ class AppConstants {
   static const String dashboardRoute = '/dashboard';
   static const String sosRoute = '/sos';
   static const String scannerRoute = '/scanner';
+  static const String checkpointsRoute = '/checkpoints';
   static const String emergencyDashboardRoute = '/emergency-dashboard';
   static const String emergencyResponseRoute = '/emergency-response';
   static const String emergencyHistoryRoute = '/emergency-history';

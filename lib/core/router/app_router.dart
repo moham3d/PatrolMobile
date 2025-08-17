@@ -10,6 +10,7 @@ import '../../features/emergency/screens/emergency_contacts_screen.dart';
 import '../../features/emergency/screens/emergency_cancel_resolve_screen.dart';
 import '../../features/emergency/screens/emergency_dashboard_screen.dart';
 import '../../features/checkpoints/screens/scanner_screen.dart';
+import '../../features/checkpoints/screens/checkpoint_list_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/emergency.dart';
@@ -92,6 +93,12 @@ class AppRouter {
       ),
       
       // Checkpoint routes
+      GoRoute(
+        path: '/checkpoints',
+        name: 'checkpoints',
+        builder: (context, state) => const CheckpointListScreen(),
+      ),
+      
       GoRoute(
         path: AppConstants.scannerRoute,
         name: 'scanner',

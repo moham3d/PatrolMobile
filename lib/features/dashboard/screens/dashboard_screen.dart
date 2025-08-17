@@ -265,6 +265,14 @@ class DashboardBody extends ConsumerWidget {
       enabled: true,
     ));
     
+    actions.add(QuickAction(
+      icon: Icons.location_on,
+      title: 'View Checkpoints',
+      subtitle: 'Browse All',
+      onTap: () => context.go(AppConstants.checkpointsRoute),
+      enabled: true,
+    ));
+    
     // All roles can report incidents
     actions.add(QuickAction(
       icon: Icons.report_problem,
