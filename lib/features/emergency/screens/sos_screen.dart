@@ -296,6 +296,13 @@ class _SOSScreenState extends ConsumerState<SOSScreen>
                             emergencyState.alert.severityColor,
                           ),
                           const SizedBox(height: 8),
+                          _buildAlertInfoRow(
+                            Icons.schedule, 
+                            'Auto-Escalation', 
+                            'In ${AppConstants.emergencyEscalationMinutes} minutes if no response',
+                            Colors.orange.shade600,
+                          ),
+                          const SizedBox(height: 8),
                           if (emergencyState.alert.latitude != null && emergencyState.alert.longitude != null)
                             _buildAlertInfoRow(
                               Icons.location_on, 

@@ -5,12 +5,16 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/services/api_service.dart';
+import 'core/services/emergency_escalation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize API service
   await ApiService.instance.initialize();
+  
+  // Initialize emergency escalation service
+  await EmergencyEscalationService.instance.initialize();
   
   runApp(
     const ProviderScope(
