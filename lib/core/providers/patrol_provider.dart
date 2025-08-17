@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/patrol_simple.dart';
+import '../models/patrol_history.dart';
 import '../models/checkpoint.dart';
 import '../services/patrol_service.dart';
 import '../services/auth_service.dart';
@@ -487,4 +488,107 @@ final todayStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
 final livePatrolStatusProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final patrolService = ref.read(patrolServiceProvider);
   return await patrolService.getLivePatrolStatus();
+});
+
+/// Patrol detail state
+sealed class PatrolDetailState {
+  const PatrolDetailState();
+}
+
+class PatrolDetailInitial extends PatrolDetailState {
+  const PatrolDetailInitial();
+}
+
+class PatrolDetailLoading extends PatrolDetailState {
+  const PatrolDetailLoading();
+}
+
+class PatrolDetailLoaded extends PatrolDetailState {
+  final Patrol patrol;
+  const PatrolDetailLoaded(this.patrol);
+}
+
+class PatrolDetailError extends PatrolDetailState {
+  final String message;
+  const PatrolDetailError(this.message);
+}
+
+/// Patrol detail notifier
+class PatrolDetailNotifier extends StateNotifier<PatrolDetailState> {
+  final int patrolId;
+  final PatrolService _patrolService;
+  final AuthService _authService;
+
+  PatrolDetailNotifier(this.patrolId, this._patrolService, this._authService) 
+    : super(const PatrolDetailInitial());
+
+  /// Load patrol details
+  Future<void> loadPatrol() async {
+    state = const PatrolDetailLoading();
+
+    try {
+      final patrol = await _patrolService.getPatrol(patrolId);
+      state = PatrolDetailLoaded(patrol);
+    } catch (e) {
+      state = PatrolDetailError(e.toString());
+    }
+  }
+
+  /// Complete patrol
+  Future<void> completePatrol(Map<String, dynamic> completionData) async {
+    try {
+      await _patrolService.completePatrol(patrolId, completionData);
+      // Reload patrol data after completion
+      await loadPatrol();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Start patrol
+  Future<void> startPatrol({
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? notes,
+  }) async {
+    try {
+      await _patrolService.startPatrol(
+        patrolId,
+        latitude: latitude,
+        longitude: longitude,
+        accuracy: accuracy,
+        notes: notes,
+      );
+      // Reload patrol data after starting
+      await loadPatrol();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Cancel patrol
+  Future<void> cancelPatrol(String reason) async {
+    try {
+      await _patrolService.cancelPatrol(patrolId, reason);
+      // Reload patrol data after cancellation
+      await loadPatrol();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Refresh patrol data
+  Future<void> refresh() async {
+    await loadPatrol();
+  }
+}
+
+/// Patrol detail provider factory
+final patrolDetailProvider = StateNotifierProvider.family<PatrolDetailNotifier, PatrolDetailState, int>((ref, patrolId) {
+  return PatrolDetailNotifier(
+    patrolId,
+    ref.read(patrolServiceProvider),
+    ref.read(authServiceProvider),
+  );
 });
