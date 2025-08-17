@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/emergency.dart';
 import '../services/emergency_service.dart';
 import '../services/emergency_escalation_service.dart';
+import '../services/emergency_response_service.dart';
 
 /// Emergency service provider
 final emergencyServiceProvider = Provider<EmergencyService>((ref) {
@@ -13,17 +14,29 @@ final emergencyEscalationServiceProvider = Provider<EmergencyEscalationService>(
   return EmergencyEscalationService.instance;
 });
 
+/// Emergency response service provider
+final emergencyResponseServiceProvider = Provider<EmergencyResponseService>((ref) {
+  return EmergencyResponseService.instance;
+});
+
 /// Emergency alerts provider
 final emergencyAlertsProvider = StateNotifierProvider<EmergencyAlertsNotifier, EmergencyAlertsState>((ref) {
   return EmergencyAlertsNotifier(
     ref.read(emergencyServiceProvider),
     ref.read(emergencyEscalationServiceProvider),
+    ref.read(emergencyResponseServiceProvider),
   );
 });
 
 /// Active emergency alert provider
 final activeEmergencyProvider = StateProvider<EmergencyAlert?>((ref) {
   return null;
+});
+
+/// Emergency contacts provider
+final emergencyContactsProvider = FutureProvider<List<EmergencyContact>>((ref) async {
+  final responseService = ref.read(emergencyResponseServiceProvider);
+  return await responseService.getEmergencyContactsEnhanced();
 });
 
 /// Location permission status provider
@@ -42,8 +55,13 @@ final locationServiceProvider = FutureProvider<bool>((ref) async {
 class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
   final EmergencyService _emergencyService;
   final EmergencyEscalationService _escalationService;
+  final EmergencyResponseService _responseService;
   
-  EmergencyAlertsNotifier(this._emergencyService, this._escalationService) : super(const EmergencyAlertsState.initial());
+  EmergencyAlertsNotifier(
+    this._emergencyService, 
+    this._escalationService,
+    this._responseService,
+  ) : super(const EmergencyAlertsState.initial());
 
   /// Trigger SOS emergency alert
   Future<EmergencyAlert?> triggerSOS({String? description}) async {
@@ -127,13 +145,13 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
     }
   }
 
-  /// Acknowledge alert
-  Future<void> acknowledgeAlert(int alertId) async {
+  /// Acknowledge alert with enhanced tracking
+  Future<void> acknowledgeAlert(int alertId, {String? note}) async {
     try {
-      await _emergencyService.acknowledgeAlert(alertId);
-      
-      // Cancel escalation when acknowledged
-      _escalationService.cancelEscalation(alertId);
+      await _responseService.acknowledgeAlertEnhanced(
+        alertId,
+        acknowledgmentNote: note,
+      );
       
       // Reload alerts to reflect changes
       await loadAlerts();
@@ -142,13 +160,19 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
     }
   }
 
-  /// Resolve alert
-  Future<void> resolveAlert(int alertId, {String? resolution}) async {
+  /// Resolve alert with enhanced tracking
+  Future<void> resolveAlert(int alertId, {
+    String? resolution,
+    String? resolutionType,
+    List<String>? followUpActions,
+  }) async {
     try {
-      await _emergencyService.resolveAlert(alertId, resolution: resolution);
-      
-      // Cancel escalation when resolved
-      _escalationService.cancelEscalation(alertId);
+      await _responseService.resolveAlertEnhanced(
+        alertId,
+        resolutionType: resolutionType ?? 'resolved',
+        resolutionNotes: resolution,
+        followUpActions: followUpActions,
+      );
       
       // If this was the active alert, clear it
       if (state is Triggered) {
@@ -157,6 +181,18 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
           state = const EmergencyAlertsState.resolved();
         }
       }
+      // Reload alerts to reflect changes
+      await loadAlerts();
+    } catch (e) {
+      state = EmergencyAlertsState.error(e.toString());
+    }
+  }
+
+  /// Manually escalate alert
+  Future<void> escalateAlert(int alertId, String reason) async {
+    try {
+      await _responseService.escalateAlert(alertId, escalationReason: reason);
+      
       // Reload alerts to reflect changes
       await loadAlerts();
     } catch (e) {

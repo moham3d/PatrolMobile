@@ -264,3 +264,75 @@ class EmergencyContact {
     return 'EmergencyContact(id: $id, name: $name, phone: $phone, type: $type)';
   }
 }
+
+/// Escalation history entry model
+class EscalationHistoryEntry {
+  final int id;
+  final int alertId;
+  final String escalationType;
+  final String escalationLevel;
+  final String reason;
+  final String escalatedAt;
+  final int? escalatedBy;
+
+  const EscalationHistoryEntry({
+    required this.id,
+    required this.alertId,
+    required this.escalationType,
+    required this.escalationLevel,
+    required this.reason,
+    required this.escalatedAt,
+    this.escalatedBy,
+  });
+
+  factory EscalationHistoryEntry.fromJson(Map<String, dynamic> json) => EscalationHistoryEntry(
+    id: json['id'] as int,
+    alertId: json['alert_id'] as int,
+    escalationType: json['escalation_type'] as String,
+    escalationLevel: json['escalation_level'] as String,
+    reason: json['reason'] as String,
+    escalatedAt: json['escalated_at'] as String,
+    escalatedBy: json['escalated_by'] as int?,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'alert_id': alertId,
+    'escalation_type': escalationType,
+    'escalation_level': escalationLevel,
+    'reason': reason,
+    'escalated_at': escalatedAt,
+    'escalated_by': escalatedBy,
+  };
+}
+
+/// Escalation status model
+class EscalationStatus {
+  final int alertId;
+  final bool isActive;
+  final Duration? remainingTime;
+  final String? escalationLevel;
+
+  const EscalationStatus({
+    required this.alertId,
+    required this.isActive,
+    this.remainingTime,
+    this.escalationLevel,
+  });
+
+  factory EscalationStatus.fromJson(Map<String, dynamic> json) => EscalationStatus(
+    alertId: json['alert_id'] as int,
+    isActive: json['is_active'] as bool,
+    remainingTime: json['remaining_time_seconds'] != null 
+        ? Duration(seconds: json['remaining_time_seconds'] as int)
+        : null,
+    escalationLevel: json['escalation_level'] as String?,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'alert_id': alertId,
+    'is_active': isActive,
+    'remaining_time_seconds': remainingTime?.inSeconds,
+    'escalation_level': escalationLevel,
+  };
+}
