@@ -175,13 +175,13 @@ dependencies:
 
 #### Week 3: Checkpoint Scanning System
 
-- [ ] **Day 1-3: QR/NFC Checkpoint Implementation**
-    - [ ] Implement QR code scanning with qr_code_scanner
-    - [ ] Create NFC tag reading with nfc_manager
-    - [ ] Build checkpoint verification against backend API
-    - [ ] Implement checkpoint validation workflow
-    - [ ] Create scanning feedback (success/error states)
-    - [ ] **Deliverables:** Working QR/NFC scanning, checkpoint verification
+- [x] **Day 1-3: QR/NFC Checkpoint Implementation**
+    - [x] Implement QR code scanning with qr_code_scanner
+    - [x] Create NFC tag reading with nfc_manager
+    - [x] Build checkpoint verification against backend API
+    - [x] Implement checkpoint validation workflow
+    - [x] Create scanning feedback (success/error states)
+    - [x] **Deliverables:** Working QR/NFC scanning, checkpoint verification
 
 - [ ] **Day 4-5: Patrol Progress & Checkpoint Management**
     - [ ] Build patrol route display with flutter_map
