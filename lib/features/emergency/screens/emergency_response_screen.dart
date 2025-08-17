@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/providers/emergency_provider.dart';
 import '../../../core/models/emergency.dart';
 import '../../../core/constants/app_constants.dart';
@@ -211,18 +212,18 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                   const Icon(Icons.person, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    'User #${alert.userId}',
+                    alert.userName ?? 'User #${alert.userId}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade600,
                     ),
                   ),
-                  if (alert.location != null) ...[
+                  if (alert.latitude != null && alert.longitude != null) ...[
                     const SizedBox(width: 16),
                     const Icon(Icons.location_on, size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        alert.location!.locationName ?? 'Location available',
+                        alert.locationName ?? 'Location available',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey.shade600,
                         ),
@@ -438,6 +439,45 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
       ),
     );
   }
+
+  /// Open location in external map app
+  void _openLocationInMap(BuildContext context, EmergencyAlert alert) async {
+    if (alert.latitude == null || alert.longitude == null) return;
+    
+    try {
+      final lat = alert.latitude!;
+      final lng = alert.longitude!;
+      final url = Uri.parse('https://www.google.com/maps?q=$lat,$lng');
+      
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        // Fallback: show coordinates in a snackbar
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Location: $lat, $lng'),
+              action: SnackBarAction(
+                label: 'Copy',
+                onPressed: () {
+                  // In a real app, copy to clipboard using flutter/services
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cannot open location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 }
 
 /// Bottom sheet showing detailed alert information
@@ -490,10 +530,15 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
           _buildDetailRow(context, 'Status', alert.status.toUpperCase()),
           _buildDetailRow(context, 'Severity', alert.severity.toUpperCase()),
           _buildDetailRow(context, 'Description', alert.description),
-          _buildDetailRow(context, 'User ID', '#${alert.userId}'),
-          _buildDetailRow(context, 'Triggered At', alert.triggeredAt),
+          _buildDetailRow(context, 'User', alert.userName ?? 'User #${alert.userId}'),
+          _buildDetailRow(context, 'Triggered At', _formatTimestamp(alert.triggeredAt)),
           
-          if (alert.location != null) ...[
+          if (alert.acknowledgedAt != null) 
+            _buildDetailRow(context, 'Acknowledged At', _formatTimestamp(alert.acknowledgedAt!)),
+          if (alert.resolvedAt != null) 
+            _buildDetailRow(context, 'Resolved At', _formatTimestamp(alert.resolvedAt!)),
+          
+          if (alert.latitude != null && alert.longitude != null) ...[
             const SizedBox(height: 8),
             Text(
               'Location Information',
@@ -502,9 +547,10 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _buildDetailRow(context, 'Location', alert.location!.locationName ?? 'Unknown'),
+            _buildDetailRow(context, 'Location', alert.locationName ?? 'Unknown'),
             _buildDetailRow(context, 'Coordinates', 
-              '${alert.location!.latitude.toStringAsFixed(6)}, ${alert.location!.longitude.toStringAsFixed(6)}'),
+              '${alert.latitude!.toStringAsFixed(6)}, ${alert.longitude!.toStringAsFixed(6)}'),
+            _buildDetailRow(context, 'Accuracy', '${alert.latitude!.toStringAsFixed(1)} meters'),
           ],
           
           const SizedBox(height: 24),
@@ -521,10 +567,12 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    // Navigate to map or contact emergency services
-                  },
+                  onPressed: alert.latitude != null && alert.longitude != null 
+                    ? () {
+                        Navigator.of(context).pop();
+                        _openLocationInMap(context, alert);
+                      }
+                    : null,
                   child: const Text('View Location'),
                 ),
               ),
