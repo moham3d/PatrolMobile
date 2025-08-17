@@ -4,7 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/models/user.dart';
+import '../../../core/models/incident.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/incident_service.dart';
+import '../../../core/services/image_compression_service.dart';
+import '../../../core/services/performance_monitoring_service.dart';
+import '../../../core/exceptions/api_exception.dart';
 
 /// Incident reporting screen for creating new incidents
 class IncidentReportScreen extends ConsumerStatefulWidget {
@@ -483,10 +488,93 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
             const SizedBox(height: 12),
             if (_attachedMedia.isNotEmpty) ...[
               Text(
-                '${_attachedMedia.length} file(s) attached',
-                style: Theme.of(context).textTheme.bodyMedium,
+                'Attached Media (${_attachedMedia.length} file(s))',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _attachedMedia.length,
+                  itemBuilder: (context, index) {
+                    final file = _attachedMedia[index];
+                    final isVideo = file.path.toLowerCase().contains('.mp4') ||
+                                  file.path.toLowerCase().contains('.mov') ||
+                                  file.path.toLowerCase().contains('.avi');
+                    
+                    return Container(
+                      width: 100,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: isVideo
+                                ? Container(
+                                    width: 100,
+                                    height: 100,
+                                    color: Colors.black87,
+                                    child: const Icon(
+                                      Icons.play_circle_filled,
+                                      color: Colors.white,
+                                      size: 40,
+                                    ),
+                                  )
+                                : Image.network(
+                                    file.path,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 100,
+                                        height: 100,
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(
+                                          Icons.image,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _attachedMedia.removeAt(index);
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
             Row(
               children: [
@@ -503,6 +591,26 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
                     onPressed: () => _captureMedia(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Choose Photo'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _captureVideo(ImageSource.camera),
+                    icon: const Icon(Icons.videocam),
+                    label: const Text('Record Video'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _captureVideo(ImageSource.gallery),
+                    icon: const Icon(Icons.video_library),
+                    label: const Text('Choose Video'),
                   ),
                 ),
               ],
@@ -561,15 +669,120 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
       final XFile? image = await picker.pickImage(source: source);
       
       if (image != null && mounted) {
+        // Show compression in progress
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Optimizing image...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+
+        // Compress image based on battery level and context
+        final performanceService = PerformanceMonitoringService.instance;
+        final compressionService = ImageCompressionService.instance;
+        
+        XFile? compressedImage;
+        if (performanceService.batteryLevel <= 20) {
+          // Aggressive compression for low battery
+          compressedImage = await compressionService.compressImageForProfile(image);
+        } else {
+          // Standard incident compression
+          compressedImage = await compressionService.compressImageForIncident(image);
+        }
+        
         setState(() {
-          _attachedMedia.add(image);
+          _attachedMedia.add(compressedImage ?? image);
         });
+
+        // Show compression result
+        if (compressedImage != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Image optimized for ${performanceService.batteryLevel}% battery'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to capture media: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _captureVideo(ImageSource source) async {
+    try {
+      final performanceService = PerformanceMonitoringService.instance;
+      
+      // Check battery level before video capture
+      if (performanceService.batteryLevel <= 15) {
+        if (mounted) {
+          final proceed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Low Battery Warning'),
+              content: Text(
+                'Battery level is at ${performanceService.batteryLevel}%. '
+                'Video recording may drain battery quickly. Continue?'
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Continue'),
+                ),
+              ],
+            ),
+          );
+          
+          if (proceed != true) return;
+        }
+      }
+
+      final ImagePicker picker = ImagePicker();
+      
+      // Adjust video quality based on battery level
+      Duration maxDuration;
+      if (performanceService.batteryLevel <= 20) {
+        maxDuration = const Duration(minutes: 2); // Shorter for low battery
+      } else if (performanceService.batteryLevel <= 50) {
+        maxDuration = const Duration(minutes: 3); // Medium duration
+      } else {
+        maxDuration = const Duration(minutes: 5); // Full duration
+      }
+      
+      final XFile? video = await picker.pickVideo(
+        source: source,
+        maxDuration: maxDuration,
+      );
+      
+      if (video != null && mounted) {
+        setState(() {
+          _attachedMedia.add(video);
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Video captured (${maxDuration.inMinutes}min max due to ${performanceService.batteryLevel}% battery)'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to capture video: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -597,20 +810,53 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
     });
 
     try {
-      // TODO: Implement actual incident submission to backend
-      // This will be integrated with the real API service
-      
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
+      final user = ref.read(authNotifierProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Upload media files first if any
+      List<String> evidenceFiles = [];
+      if (_attachedMedia.isNotEmpty) {
+        // Note: File upload implementation would be needed here
+        // For now, we'll simulate with file paths
+        evidenceFiles = _attachedMedia.map((file) => file.path).toList();
+      }
+
+      // Create incident via service
+      final response = await IncidentService.instance.createIncident(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        category: _selectedCategory!,
+        priority: _selectedPriority ?? 'medium',
+        siteId: user.siteId,
+        latitude: _currentLocation?.latitude,
+        longitude: _currentLocation?.longitude,
+        locationAccuracy: _currentLocation?.accuracy,
+        notes: _notesController.text.trim().isNotEmpty 
+            ? _notesController.text.trim() 
+            : null,
+        evidenceFiles: evidenceFiles.isNotEmpty ? evidenceFiles : null,
+      );
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Incident report submitted successfully'),
+          SnackBar(
+            content: Text('Incident #${response.incident.id} submitted successfully'),
             backgroundColor: Colors.green,
           ),
         );
         
         context.pop(); // Return to previous screen
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('API Error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
