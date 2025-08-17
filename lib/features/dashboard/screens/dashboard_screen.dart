@@ -273,6 +273,15 @@ class DashboardBody extends ConsumerWidget {
       enabled: true,
     ));
     
+    // Add patrol progress for all roles
+    actions.add(QuickAction(
+      icon: Icons.route,
+      title: 'Patrol Progress',
+      subtitle: 'Track Routes',
+      onTap: () => context.go(AppConstants.patrolProgressRoute),
+      enabled: true,
+    ));
+    
     // All roles can report incidents
     actions.add(QuickAction(
       icon: Icons.report_problem,

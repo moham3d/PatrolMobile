@@ -11,6 +11,8 @@ import '../../features/emergency/screens/emergency_cancel_resolve_screen.dart';
 import '../../features/emergency/screens/emergency_dashboard_screen.dart';
 import '../../features/checkpoints/screens/scanner_screen.dart';
 import '../../features/checkpoints/screens/checkpoint_list_screen.dart';
+import '../../features/patrols/screens/patrol_progress_screen.dart';
+import '../../features/patrols/screens/patrol_detail_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/emergency.dart';
@@ -103,6 +105,26 @@ class AppRouter {
         path: AppConstants.scannerRoute,
         name: 'scanner',
         builder: (context, state) => const ScannerScreen(),
+      ),
+      
+      // Patrol routes
+      GoRoute(
+        path: AppConstants.patrolProgressRoute,
+        name: 'patrol_progress',
+        builder: (context, state) => const PatrolProgressScreen(),
+      ),
+      
+      GoRoute(
+        path: '/patrol/:patrolId',
+        name: 'patrol_detail',
+        builder: (context, state) {
+          final patrolId = state.pathParameters['patrolId']!;
+          final action = state.uri.queryParameters['action'];
+          return PatrolDetailScreen(
+            patrolId: patrolId,
+            action: action,
+          );
+        },
       ),
     ],
     
