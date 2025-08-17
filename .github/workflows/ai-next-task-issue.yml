@@ -1,4 +1,14 @@
+# AI Agent Next Task Issue
+# - Grants explicit workflow permissions for issues write
+# - Prints debug info for the checklist file
+# - Parses the first unchecked item (supports indented "- [ ]" bullets)
+# - Uses actions/github-script@v7 with github.rest.issues.create
 name: AI Agent Next Task Issue
+
+# Request explicit permissions for the token used by the workflow
+permissions:
+  issues: write
+  contents: read
 
 on:
   pull_request:
@@ -7,44 +17,78 @@ on:
 
 jobs:
   next-task:
+    # Only run when the PR was merged
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-    - name: Debug checklist file
-      run: cat .github/mobile-development-instructions.md
+    - name: Debug: list repo and print checklist file
+      run: |
+        echo "PWD: $(pwd)"
+        echo "Tree at repo root:"
+        ls -la
+        echo "Listing .github directory:"
+        ls -la .github || true
+        echo "----- start checklist file -----"
+        cat .github/mobile-development-instructions.md || echo "Checklist file not found"
+        echo "----- end checklist file -----"
 
     - name: Parse next unchecked checklist item
       id: checklist
       run: |
+        set -o errexit
         file=".github/mobile-development-instructions.md"
-        # Find first unchecked item (allow leading spaces and dash)
-        line=$(grep -n '^[[:space:]]*-\s*\[ \]' $file | head -n 1 | cut -d: -f1)
+        # Find first unchecked item (allow leading spaces, optional dash/bullet)
+        # Matches lines like "- [ ] Task" or "  - [ ] Task"
+        line=$(grep -n '^[[:space:]]*-\s*\[ \]' "$file" | head -n 1 | cut -d: -f1 || true)
         if [ -z "$line" ]; then
+          echo "No unchecked checklist items found."
           echo "has_next=false" >> $GITHUB_OUTPUT
         else
-          # Extract the checklist text after '- [ ] '
-          item=$(sed -n "${line}p" $file | sed 's/^[[:space:]]*-\s*\[ \] //')
-          echo "item=$item" >> $GITHUB_OUTPUT
+          # Extract the text after '- [ ] '
+          item=$(sed -n "${line}p" "$file" | sed 's/^[[:space:]]*-\s*\[ \] //')
+          echo "Found unchecked item on line $line: $item"
+          echo "item=${item}" >> $GITHUB_OUTPUT
           echo "line=$line" >> $GITHUB_OUTPUT
           echo "has_next=true" >> $GITHUB_OUTPUT
         fi
 
-    - name: Create issue for next checklist item
+    - name: Create issue for next checklist item (using GITHUB_TOKEN)
       if: steps.checklist.outputs.has_next == 'true'
       uses: actions/github-script@v7
       with:
+        # Use the default token first. If this fails you can create a PAT and place in repo secrets as GITHUB_PAT and swap this value.
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const itemText = process.env['item'] || '${{ steps.checklist.outputs.item }}';
-          github.rest.issues.create({
+          console.log('Creating issue for:', itemText);
+          await github.rest.issues.create({
             owner: context.repo.owner,
             repo: context.repo.repo,
             title: `AI Agent: Next Task - ${itemText}`,
             body: `Proceed to the next checklist item from .github/mobile-development-instructions.md:\n\n${itemText}\n\nWhen complete, open a PR and wait for merge before moving to the next item.`
-          })
+          });
+
+    - name: Fallback: create issue using PAT if previous failed (optional)
+      if: steps.checklist.outputs.has_next == 'true' && failure()
+      # Note: This step will run only if the above failed. To use it, set a repository secret GITHUB_PAT with a PAT that has repo scope.
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_PAT }}
+        script: |
+          const itemText = process.env['item'] || '${{ steps.checklist.outputs.item }}';
+          console.log('Fallback: creating issue using PAT for:', itemText);
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `AI Agent: Next Task - ${itemText}`,
+            body: `Proceed to the next checklist item from .github/mobile-development-instructions.md:\n\n${itemText}\n\nWhen complete, open a PR and wait for merge before moving to the next item.`
+          });
 
     - name: All checklist items done
       if: steps.checklist.outputs.has_next != 'true'
