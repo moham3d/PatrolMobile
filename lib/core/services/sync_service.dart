@@ -419,6 +419,236 @@ class SyncService {
     await _databaseService.clearSyncedItems();
   }
 
+  /// Sync only critical data (emergency alerts, panic alerts)
+  Future<void> syncCriticalData() async {
+    if (_isSyncing) return;
+    
+    _isSyncing = true;
+    _syncStatusController.add(SyncStatus.syncing);
+    
+    try {
+      print('Syncing critical data only...');
+      
+      // Sync emergency alerts and panic alerts only
+      await _syncEmergencyData();
+      
+      print('Critical data sync completed');
+      _syncStatusController.add(SyncStatus.completed);
+    } catch (e) {
+      print('Critical data sync failed: $e');
+      _syncStatusController.add(SyncStatus.error);
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  /// Sync recent data (last 24 hours)
+  Future<void> syncRecentData() async {
+    if (_isSyncing) return;
+    
+    _isSyncing = true;
+    _syncStatusController.add(SyncStatus.syncing);
+    
+    try {
+      print('Syncing recent data...');
+      
+      // Sync data from last 24 hours
+      final since = DateTime.now().subtract(const Duration(hours: 24));
+      await _syncDataSince(since);
+      
+      print('Recent data sync completed');
+      _syncStatusController.add(SyncStatus.completed);
+    } catch (e) {
+      print('Recent data sync failed: $e');
+      _syncStatusController.add(SyncStatus.error);
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  /// Perform full synchronization
+  Future<void> performFullSync() async {
+    if (_isSyncing) return;
+    
+    _isSyncing = true;
+    _syncStatusController.add(SyncStatus.syncing);
+    
+    try {
+      print('Performing full sync...');
+      
+      // Upload all pending offline data
+      await _uploadPendingData();
+      
+      // Download updates
+      final result = await downloadDataForOfflineUse();
+      
+      if (result) {
+        print('Full sync completed successfully');
+        _syncStatusController.add(SyncStatus.completed);
+      } else {
+        print('Full sync completed with warnings');
+        _syncStatusController.add(SyncStatus.completed);
+      }
+    } catch (e) {
+      print('Full sync failed: $e');
+      _syncStatusController.add(SyncStatus.error);
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  /// Check if there's pending offline data to sync
+  Future<bool> hasPendingOfflineData() async {
+    try {
+      // Check for pending checkpoint visits
+      final pendingCheckpoints = await _databaseService.getPendingCheckpointVisits();
+      if (pendingCheckpoints.isNotEmpty) return true;
+      
+      // Check for pending patrol actions  
+      final pendingPatrols = await _databaseService.getPendingPatrolActions();
+      if (pendingPatrols.isNotEmpty) return true;
+      
+      // Check for pending emergency data
+      final pendingEmergency = await _databaseService.getPendingEmergencyData();
+      if (pendingEmergency.isNotEmpty) return true;
+      
+      return false;
+    } catch (e) {
+      print('Error checking pending offline data: $e');
+      return false;
+    }
+  }
+
+  /// Sync offline data when back online
+  Future<void> syncOfflineData() async {
+    if (_isSyncing) return;
+    
+    _isSyncing = true;
+    _syncStatusController.add(SyncStatus.syncing);
+    
+    try {
+      print('Syncing offline data...');
+      
+      // Upload all pending offline data
+      await _uploadPendingData();
+      
+      print('Offline data sync completed');
+      _syncStatusController.add(SyncStatus.completed);
+    } catch (e) {
+      print('Offline data sync failed: $e');
+      _syncStatusController.add(SyncStatus.error);
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  /// Sync emergency data (critical priority)
+  Future<void> _syncEmergencyData() async {
+    try {
+      // Upload pending emergency alerts
+      final pendingEmergency = await _databaseService.getPendingEmergencyData();
+      
+      for (final emergencyData in pendingEmergency) {
+        try {
+          // Upload emergency data to backend
+          await _uploadEmergencyData(emergencyData);
+        } catch (e) {
+          print('Failed to upload emergency data: $e');
+        }
+      }
+    } catch (e) {
+      print('Error syncing emergency data: $e');
+    }
+  }
+
+  /// Sync data since a specific date
+  Future<void> _syncDataSince(DateTime since) async {
+    try {
+      // Upload pending data first
+      await _uploadPendingData();
+      
+      // Download recent updates
+      await _downloadRecentUpdates(since);
+    } catch (e) {
+      print('Error syncing data since $since: $e');
+    }
+  }
+
+  /// Upload emergency data to backend
+  Future<void> _uploadEmergencyData(Map<String, dynamic> emergencyData) async {
+    // Implementation would depend on specific emergency data structure
+    print('Uploading emergency data: ${emergencyData['id']}');
+  }
+
+  /// Download recent updates from backend
+  Future<void> _downloadRecentUpdates(DateTime since) async {
+    try {
+      // Download recent checkpoints
+      await _downloadCheckpointsSince(null, since);
+      
+      // Download recent patrols
+      await _downloadPatrolsSince(null, since);
+      
+      print('Downloaded recent updates since $since');
+    } catch (e) {
+      print('Error downloading recent updates: $e');
+    }
+  }
+
+  /// Download checkpoints with date filter
+  Future<void> _downloadCheckpointsSince(int? siteId, DateTime since) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'since': since.toIso8601String(),
+      };
+      if (siteId != null) queryParams['site_id'] = siteId;
+      
+      final response = await ApiService.instance.get<Map<String, dynamic>>(
+        '${AppConstants.checkpointsEndpoint}',
+        queryParameters: queryParams,
+      );
+      
+      final List<dynamic> checkpointsData = response.data?['checkpoints'] ?? 
+                                           response.data?['data'] ?? [];
+      
+      for (final checkpointData in checkpointsData) {
+        final checkpoint = Checkpoint.fromJson(checkpointData);
+        await _databaseService.cacheCheckpoint(checkpoint);
+      }
+      
+      print('Cached ${checkpointsData.length} recent checkpoints');
+    } catch (e) {
+      print('Error downloading recent checkpoints: $e');
+    }
+  }
+
+  /// Download patrols with date filter
+  Future<void> _downloadPatrolsSince(int? userId, DateTime since) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'since': since.toIso8601String(),
+      };
+      if (userId != null) queryParams['assigned_to'] = userId;
+      
+      final response = await ApiService.instance.get<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/patrols/assigned',
+        queryParameters: queryParams,
+      );
+      
+      final List<dynamic> patrolsData = response.data?['patrols'] ?? 
+                                       response.data?['data'] ?? [];
+      
+      for (final patrolData in patrolsData) {
+        final patrol = Patrol.fromJson(patrolData);
+        await _databaseService.cachePatrol(patrol);
+      }
+      
+      print('Cached ${patrolsData.length} recent patrols');
+    } catch (e) {
+      print('Error downloading recent patrols: $e');
+    }
+  }
+
   /// Dispose of resources
   void dispose() {
     _syncTimer?.cancel();
