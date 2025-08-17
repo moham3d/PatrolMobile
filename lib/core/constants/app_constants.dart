@@ -45,6 +45,12 @@ class AppConstants {
   static const String emergencyContactsRoute = '/emergency-contacts';
   static const String emergencyCancelResolveRoute = '/emergency/cancel-resolve';
   
+  // Patrol routes
+  static const String patrolProgressRoute = '/patrol-progress';
+  static const String patrolDetailRoute = '/patrol';
+  static const String patrolMapRoute = '/patrol-map';
+  static const String patrolMonitoringRoute = '/patrol-monitoring';
+  
   // Additional storage keys
   static const String userRoleKey = 'user_role';
   
