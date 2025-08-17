@@ -50,6 +50,9 @@ class AppConstants {
   static const String incidentListRoute = '/incidents';
   static const String incidentDetailRoute = '/incident';
   
+  // Performance routes
+  static const String performanceRoute = '/performance';
+  
   // Patrol routes
   static const String patrolProgressRoute = '/patrol-progress';
   static const String patrolDetailRoute = '/patrol';
