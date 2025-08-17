@@ -810,10 +810,12 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
     });
 
     try {
-      final user = ref.read(authNotifierProvider);
-      if (user == null) {
+      final authState = ref.read(authNotifierProvider);
+      if (authState is! Authenticated) {
         throw Exception('User not authenticated');
       }
+      
+      final user = authState.user;
 
       // Upload media files first if any
       List<String> evidenceFiles = [];
@@ -829,7 +831,7 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
         description: _descriptionController.text.trim(),
         category: _selectedCategory!,
         priority: _selectedPriority ?? 'medium',
-        siteId: user.siteId,
+        siteId: user.assignedSites?.isNotEmpty == true ? user.assignedSites!.first : null,
         latitude: _currentLocation?.latitude,
         longitude: _currentLocation?.longitude,
         locationAccuracy: _currentLocation?.accuracy,
@@ -842,7 +844,7 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Incident #${response.incident.id} submitted successfully'),
+            content: Text('Incident #${response.incident?.id ?? 'unknown'} submitted successfully'),
             backgroundColor: Colors.green,
           ),
         );

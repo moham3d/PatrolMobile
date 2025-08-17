@@ -569,8 +569,8 @@ class DatabaseService {
     });
   }
 
-  /// Cache checkpoint for offline use
-  Future<void> cacheCheckpoint(Checkpoint checkpoint) async {
+  /// Cache checkpoint for offline use (Enhanced version)
+  Future<void> cacheCheckpointEnhanced(Checkpoint checkpoint) async {
     final db = await database;
     
     // Create checkpoints cache table if it doesn't exist
@@ -579,11 +579,11 @@ class DatabaseService {
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
-        location_id INTEGER,
+        site_id INTEGER,
         latitude REAL,
         longitude REAL,
         qr_code TEXT,
-        nfc_tag_id TEXT,
+        nfc_tag TEXT,
         is_active INTEGER DEFAULT 1,
         created_at TEXT,
         updated_at TEXT,
@@ -591,33 +591,33 @@ class DatabaseService {
       )
     ''');
     
-    await db.insertOrReplace('cached_checkpoints', {
+    await db.insert('cached_checkpoints', {
       'id': checkpoint.id,
       'name': checkpoint.name,
       'description': checkpoint.description,
-      'location_id': checkpoint.locationId,
+      'site_id': checkpoint.siteId,
       'latitude': checkpoint.latitude,
       'longitude': checkpoint.longitude,
       'qr_code': checkpoint.qrCode,
-      'nfc_tag_id': checkpoint.nfcTagId,
+      'nfc_tag': checkpoint.nfcTag,
       'is_active': checkpoint.isActive ? 1 : 0,
-      'created_at': checkpoint.createdAt.toIso8601String(),
-      'updated_at': checkpoint.updatedAt.toIso8601String(),
-    });
+      'created_at': checkpoint.createdAt,
+      'updated_at': checkpoint.updatedAt,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  /// Cache patrol for offline use  
-  Future<void> cachePatrol(Patrol patrol) async {
+  /// Cache patrol for offline use (Enhanced version)
+  Future<void> cachePatrolEnhanced(Patrol patrol) async {
     final db = await database;
     
     // Create patrols cache table if it doesn't exist
     await db.execute('''
       CREATE TABLE IF NOT EXISTS cached_patrols (
         id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
+        title TEXT NOT NULL,
         description TEXT,
         site_id INTEGER,
-        assigned_user_id INTEGER,
+        assigned_to INTEGER,
         start_time TEXT,
         end_time TEXT,
         status TEXT,
@@ -627,18 +627,18 @@ class DatabaseService {
       )
     ''');
     
-    await db.insertOrReplace('cached_patrols', {
+    await db.insert('cached_patrols', {
       'id': patrol.id,
-      'name': patrol.name,
+      'title': patrol.title,
       'description': patrol.description,
       'site_id': patrol.siteId,
-      'assigned_user_id': patrol.assignedUserId,
-      'start_time': patrol.startTime?.toIso8601String(),
-      'end_time': patrol.endTime?.toIso8601String(),
+      'assigned_to': patrol.assignedTo,
+      'start_time': patrol.startTime,
+      'end_time': patrol.endTime,
       'status': patrol.status,
-      'created_at': patrol.createdAt.toIso8601String(),
-      'updated_at': patrol.updatedAt.toIso8601String(),
-    });
+      'created_at': patrol.createdAt,
+      'updated_at': patrol.updatedAt,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Close database
