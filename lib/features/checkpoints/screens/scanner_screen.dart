@@ -1,21 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../core/providers/checkpoint_provider.dart';
+import '../../../core/services/qr_scanner_service.dart';
+import '../../../core/services/nfc_scanner_service.dart';
+import '../widgets/qr_scanner_widget.dart';
+import '../widgets/nfc_scanner_widget.dart';
 
 /// Checkpoint scanner screen for QR/NFC scanning
-class ScannerScreen extends StatefulWidget {
+class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
 
   @override
-  State<ScannerScreen> createState() => _ScannerScreenState();
+  ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends State<ScannerScreen> {
-  bool _isScanning = false;
-  bool _hasScanned = false;
-  String? _scannedData;
+class _ScannerScreenState extends ConsumerState<ScannerScreen> {
+  final QRScannerService _qrService = QRScannerService.instance;
+  final NFCScannerService _nfcService = NFCScannerService.instance;
+  
+  bool _isQRScanning = false;
+  bool _isNFCScanning = false;
+  bool _hasLocationPermission = false;
+  Position? _currentLocation;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+    _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _qrService.dispose();
+    _nfcService.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeServices() async {
+    await _nfcService.initialize();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        final requestResult = await Geolocator.requestPermission();
+        _hasLocationPermission = requestResult == LocationPermission.whileInUse ||
+                                requestResult == LocationPermission.always;
+      } else {
+        _hasLocationPermission = permission == LocationPermission.whileInUse ||
+                                permission == LocationPermission.always;
+      }
+
+      if (_hasLocationPermission) {
+        _currentLocation = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final scanState = ref.watch(scanProvider);
+    final isScanning = ref.watch(isScanningProvider);
+    final scanError = ref.watch(scanErrorProvider);
+    final scanSuccess = ref.watch(scanSuccessDataProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Checkpoint Scanner'),
@@ -57,42 +113,70 @@ class _ScannerScreenState extends State<ScannerScreen> {
               
               const SizedBox(height: 24),
               
-              // Scanner area
+              // Scanner area or result
               Expanded(
-                child: _hasScanned ? _buildScanResult() : _buildScannerView(),
+                child: scanSuccess != null 
+                  ? _buildScanResult(scanSuccess) 
+                  : _buildScannerView(isScanning),
               ),
               
               const SizedBox(height: 16),
+              
+              // Error display
+              if (scanError != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: Colors.red.shade600),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          scanError,
+                          style: TextStyle(color: Colors.red.shade800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               
               // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _startQRScan,
-                      icon: const Icon(Icons.qr_code),
-                      label: const Text('QR Code'),
+              if (scanSuccess == null) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: isScanning ? null : _startQRScan,
+                        icon: const Icon(Icons.qr_code),
+                        label: const Text('QR Code'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _startNFCScan,
-                      icon: const Icon(Icons.nfc),
-                      label: const Text('NFC Tag'),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: isScanning ? null : _startNFCScan,
+                        icon: const Icon(Icons.nfc),
+                        label: const Text('NFC Tag'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Manual entry option
-              TextButton.icon(
-                onPressed: _showManualEntry,
-                icon: const Icon(Icons.edit),
-                label: const Text('Manual Entry'),
-              ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Manual entry option
+                TextButton.icon(
+                  onPressed: isScanning ? null : _showManualEntry,
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Manual Entry'),
+                ),
+              ],
             ],
           ),
         ),
@@ -100,12 +184,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
-  Widget _buildScannerView() {
+  Widget _buildScannerView(bool isScanning) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(
-          color: _isScanning
+          color: isScanning
               ? Theme.of(context).primaryColor
               : Colors.grey.shade300,
           width: 2,
@@ -115,10 +199,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (_isScanning) ...[
+          if (isScanning) ...[
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
             const Text('Scanning...'),
+            const SizedBox(height: 8),
+            Text(
+              _isQRScanning ? 'Looking for QR code...' : 
+              _isNFCScanning ? 'Waiting for NFC tag...' : 'Verifying...',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+            ),
           ] else ...[
             Icon(
               Icons.center_focus_strong,
@@ -145,7 +237,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
-  Widget _buildScanResult() {
+  Widget _buildScanResult(ScanSuccess scanSuccess) {
+    final checkpoint = scanSuccess.checkpoint;
+    final visit = scanSuccess.visitResponse.visit;
+    
     return Column(
       children: [
         // Success icon
@@ -183,13 +278,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoRow('Checkpoint', 'Main Entrance'),
+                _buildInfoRow('Checkpoint', checkpoint.name),
                 const SizedBox(height: 8),
-                _buildInfoRow('Location', 'Building A - East Wing'),
+                if (checkpoint.locationName != null)
+                  _buildInfoRow('Location', checkpoint.locationName!),
+                if (checkpoint.locationName != null)
+                  const SizedBox(height: 8),
+                _buildInfoRow('Code', checkpoint.code),
+                const SizedBox(height: 8),
+                _buildInfoRow('Method', visit?.scanMethod.toUpperCase() ?? 'UNKNOWN'),
                 const SizedBox(height: 8),
                 _buildInfoRow('Time', DateTime.now().toString().substring(0, 19)),
                 const SizedBox(height: 8),
-                _buildInfoRow('Status', 'Verified'),
+                _buildInfoRow('Status', 'Verified ✓'),
               ],
             ),
           ),
@@ -238,35 +339,46 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   void _startQRScan() async {
-    setState(() {
-      _isScanning = true;
-    });
-
-    try {
-      // TODO: Implement actual QR code scanning
-      // This should use qr_code_scanner package
-      await Future.delayed(const Duration(seconds: 2)); // Simulate scan
-      
+    // Check camera permission first
+    final hasPermission = await _qrService.checkCameraPermission();
+    if (!hasPermission) {
       if (mounted) {
-        setState(() {
-          _isScanning = false;
-          _hasScanned = true;
-          _scannedData = 'QR_CHECKPOINT_001';
-        });
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('QR code scanned successfully!'),
-            backgroundColor: Colors.green,
+            content: Text('Camera permission required for QR scanning'),
+            backgroundColor: Colors.red,
           ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isQRScanning = true;
+    });
+
+    // Reset any previous scan state
+    ref.read(scanProvider.notifier).resetScan();
+
+    try {
+      // Show QR scanner widget
+      final result = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (context) => const QRScannerWidget(),
+        ),
+      );
+
+      if (result != null && mounted) {
+        // Process the scanned QR code
+        await ref.read(scanProvider.notifier).scanQRCode(
+          qrCode: result,
+          latitude: _currentLocation?.latitude,
+          longitude: _currentLocation?.longitude,
+          accuracy: _currentLocation?.accuracy,
         );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isScanning = false;
-        });
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('QR scan failed: $e'),
@@ -274,39 +386,54 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isQRScanning = false;
+        });
+      }
     }
   }
 
   void _startNFCScan() async {
-    setState(() {
-      _isScanning = true;
-    });
-
-    try {
-      // TODO: Implement actual NFC scanning
-      // This should use nfc_manager package
-      await Future.delayed(const Duration(seconds: 2)); // Simulate scan
-      
+    if (!_nfcService.isAvailable) {
       if (mounted) {
-        setState(() {
-          _isScanning = false;
-          _hasScanned = true;
-          _scannedData = 'NFC_CHECKPOINT_001';
-        });
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('NFC tag scanned successfully!'),
-            backgroundColor: Colors.green,
+            content: Text('NFC is not available on this device'),
+            backgroundColor: Colors.orange,
           ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isNFCScanning = true;
+    });
+
+    // Reset any previous scan state
+    ref.read(scanProvider.notifier).resetScan();
+
+    try {
+      // Show NFC scanner widget
+      final result = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (context) => const NFCScannerWidget(),
+        ),
+      );
+
+      if (result != null && mounted) {
+        // Process the scanned NFC tag
+        await ref.read(scanProvider.notifier).scanNFCTag(
+          nfcTag: result,
+          latitude: _currentLocation?.latitude,
+          longitude: _currentLocation?.longitude,
+          accuracy: _currentLocation?.accuracy,
         );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isScanning = false;
-        });
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('NFC scan failed: $e'),
@@ -314,10 +441,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isNFCScanning = false;
+        });
+      }
     }
   }
 
   void _showManualEntry() {
+    final TextEditingController controller = TextEditingController();
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -330,11 +465,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              controller: controller,
               decoration: const InputDecoration(
                 labelText: 'Checkpoint ID',
                 hintText: 'e.g. CP_001',
               ),
               textCapitalization: TextCapitalization.characters,
+              autofocus: true,
             ),
           ],
         ),
@@ -344,13 +481,28 @@ class _ScannerScreenState extends State<ScannerScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final code = controller.text.trim();
+              if (code.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a checkpoint ID'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
               Navigator.of(context).pop();
-              // TODO: Process manual entry
-              setState(() {
-                _hasScanned = true;
-                _scannedData = 'MANUAL_ENTRY';
-              });
+              
+              // Process manual entry
+              await ref.read(scanProvider.notifier).manualEntry(
+                checkpointCode: code,
+                latitude: _currentLocation?.latitude,
+                longitude: _currentLocation?.longitude,
+                accuracy: _currentLocation?.accuracy,
+                notes: 'Manual entry',
+              );
             },
             child: const Text('Submit'),
           ),
@@ -360,10 +512,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   void _scanAnother() {
-    setState(() {
-      _hasScanned = false;
-      _scannedData = null;
-      _isScanning = false;
-    });
+    ref.read(scanProvider.notifier).resetScan();
   }
 }
