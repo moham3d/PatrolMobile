@@ -241,6 +241,7 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                 children: [
                   if (alert.status == 'active') ...[
                     Expanded(
+                      flex: 2,
                       child: OutlinedButton.icon(
                         onPressed: () => _acknowledgeAlert(alert, notifier),
                         icon: const Icon(Icons.check_circle_outline),
@@ -250,8 +251,9 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Expanded(
+                      flex: 2,
                       child: ElevatedButton.icon(
                         onPressed: () => _resolveAlert(context, alert, notifier),
                         icon: const Icon(Icons.done),
@@ -261,8 +263,19 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                         ),
                       ),
                     ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      flex: 1,
+                      child: IconButton(
+                        onPressed: () => _escalateAlert(context, alert, notifier),
+                        icon: const Icon(Icons.trending_up),
+                        color: Colors.red,
+                        tooltip: 'Escalate',
+                      ),
+                    ),
                   ] else if (alert.status == 'acknowledged') ...[
                     Expanded(
+                      flex: 3,
                       child: ElevatedButton.icon(
                         onPressed: () => _resolveAlert(context, alert, notifier),
                         icon: const Icon(Icons.done),
@@ -270,6 +283,16 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 1,
+                      child: IconButton(
+                        onPressed: () => _escalateAlert(context, alert, notifier),
+                        icon: const Icon(Icons.trending_up),
+                        color: Colors.red,
+                        tooltip: 'Escalate',
                       ),
                     ),
                   ] else ...[
@@ -344,12 +367,15 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
   }
 
   void _acknowledgeAlert(EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
+    // Show acknowledgment dialog
+    final acknowledgmentNote = await _showAcknowledgmentDialog(context);
+    
     try {
-      await notifier.acknowledgeAlert(alert.id);
+      await notifier.acknowledgeAlert(alert.id, note: acknowledgmentNote);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Alert acknowledged'),
+            content: Text('Alert acknowledged with enhanced tracking'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -367,14 +393,19 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
   }
 
   void _resolveAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
-    final resolution = await _showResolutionDialog(context);
-    if (resolution != null) {
+    final resolutionData = await _showEnhancedResolutionDialog(context);
+    if (resolutionData != null) {
       try {
-        await notifier.resolveAlert(alert.id, resolution: resolution);
+        await notifier.resolveAlert(
+          alert.id,
+          resolution: resolutionData['notes'],
+          resolutionType: resolutionData['type'],
+          followUpActions: resolutionData['followUp']?.cast<String>(),
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Alert resolved'),
+              content: Text('Alert resolved with enhanced tracking'),
               backgroundColor: Colors.green,
             ),
           );
@@ -392,25 +423,25 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
     }
   }
 
-  Future<String?> _showResolutionDialog(BuildContext context) async {
+  Future<String?> _showAcknowledgmentDialog(BuildContext context) async {
     final controller = TextEditingController();
     
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Resolve Alert'),
+        title: const Text('Acknowledge Alert'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Please provide resolution details:'),
+            const Text('Acknowledge that you have received and are responding to this alert.'),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               decoration: const InputDecoration(
-                labelText: 'Resolution notes',
-                hintText: 'Describe how the alert was resolved...',
+                labelText: 'Acknowledgment notes (optional)',
+                hintText: 'Add any relevant notes...',
               ),
-              maxLines: 3,
+              maxLines: 2,
             ),
           ],
         ),
@@ -421,7 +452,129 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Resolve'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Acknowledge'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>?> _showEnhancedResolutionDialog(BuildContext context) async {
+    final notesController = TextEditingController();
+    String selectedType = 'resolved';
+    final followUpActions = <String>[];
+    
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Resolve Alert'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Resolution Type:'),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'resolved', child: Text('Resolved')),
+                    DropdownMenuItem(value: 'false_alarm', child: Text('False Alarm')),
+                    DropdownMenuItem(value: 'duplicate', child: Text('Duplicate')),
+                    DropdownMenuItem(value: 'referred', child: Text('Referred to Others')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedType = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('Resolution Notes:'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: notesController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Describe how the alert was resolved...',
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                const Text('Follow-up Actions (optional):'),
+                const SizedBox(height: 8),
+                ...followUpActions.map((action) => Chip(
+                  label: Text(action),
+                  onDeleted: () {
+                    setState(() {
+                      followUpActions.remove(action);
+                    });
+                  },
+                )),
+                TextButton.icon(
+                  onPressed: () async {
+                    final action = await _showAddFollowUpDialog(context);
+                    if (action != null && action.isNotEmpty) {
+                      setState(() {
+                        followUpActions.add(action);
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Follow-up Action'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop({
+                'type': selectedType,
+                'notes': notesController.text.trim(),
+                'followUp': followUpActions,
+              }),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Resolve'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _showAddFollowUpDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Follow-up Action'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Follow-up action',
+            hintText: 'e.g., File incident report, Schedule maintenance...',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('Add'),
           ),
         ],
       ),
@@ -607,6 +760,83 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
               value,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _escalateAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
+    final escalationReason = await _showEscalationDialog(context);
+    if (escalationReason != null && escalationReason.isNotEmpty) {
+      try {
+        await notifier.escalateAlert(alert.id, escalationReason);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Alert escalated successfully'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to escalate alert: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<String?> _showEscalationDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.trending_up,
+              color: Colors.red.shade600,
+            ),
+            const SizedBox(width: 8),
+            const Text('Escalate Alert'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'This will immediately escalate the alert to higher-level personnel and trigger additional emergency protocols.',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'Escalation reason',
+                hintText: 'Why is this alert being escalated?',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Escalate'),
           ),
         ],
       ),

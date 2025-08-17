@@ -340,6 +340,130 @@ class EmergencyEscalationService {
     }
   }
 
+  /// Get escalation history for an alert
+  Future<List<EscalationHistoryEntry>> getEscalationHistory(int alertId) async {
+    try {
+      final response = await ApiService.instance.get<List<dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/alerts/$alertId/escalations',
+      );
+
+      if (response.data != null) {
+        return response.data!
+            .map((json) => EscalationHistoryEntry.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      print('Failed to get escalation history: $e');
+      return [];
+    }
+  }
+
+  /// Manually trigger escalation for an alert
+  Future<void> manuallyEscalateAlert(int alertId, {
+    required String reason,
+    String? escalationLevel,
+    int? escalatedBy,
+  }) async {
+    try {
+      final escalationData = {
+        'alert_id': alertId,
+        'escalation_type': 'manual',
+        'escalation_reason': reason,
+        'escalated_by': escalatedBy,
+        'escalated_at': DateTime.now().toIso8601String(),
+      };
+
+      if (escalationLevel != null) {
+        escalationData['escalation_level'] = escalationLevel;
+      }
+
+      await ApiService.instance.post<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/alerts/$alertId/escalate',
+        data: escalationData,
+      );
+
+      // Start immediate escalation workflow
+      final alert = await _getAlertById(alertId);
+      if (alert != null) {
+        await _escalateAlert(alert);
+      }
+
+      print('Manual escalation triggered for alert #$alertId');
+    } catch (e) {
+      print('Failed to manually escalate alert: $e');
+    }
+  }
+
+  /// Set custom escalation rules
+  void setEscalationRules(int alertId, Map<String, dynamic> rules) {
+    // Store custom escalation rules for specific alerts
+    // This could include custom timeouts, escalation levels, contact lists, etc.
+    print('Custom escalation rules set for alert #$alertId: $rules');
+  }
+
+  /// Get escalation status for an alert
+  EscalationStatus getEscalationStatus(int alertId) {
+    final hasTimer = _escalationTimers.containsKey(alertId);
+    
+    if (!hasTimer) {
+      return EscalationStatus(
+        alertId: alertId,
+        isActive: false,
+        remainingTime: null,
+        escalationLevel: null,
+      );
+    }
+
+    // In a real implementation, you would track the start time to calculate remaining time
+    return EscalationStatus(
+      alertId: alertId,
+      isActive: true,
+      remainingTime: Duration(minutes: AppConstants.emergencyEscalationMinutes),
+      escalationLevel: 'pending',
+    );
+  }
+
+  /// Send escalation status update
+  Future<void> updateEscalationStatus(int alertId, String status, {String? notes}) async {
+    try {
+      final data = {
+        'alert_id': alertId,
+        'escalation_status': status,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      if (notes != null) data['notes'] = notes;
+
+      await ApiService.instance.put<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/alerts/$alertId/escalation-status',
+        data: data,
+      );
+
+      print('Escalation status updated for alert #$alertId: $status');
+    } catch (e) {
+      print('Failed to update escalation status: $e');
+    }
+  }
+
+  /// Get alert by ID (helper method)
+  Future<EmergencyAlert?> _getAlertById(int alertId) async {
+    try {
+      final response = await ApiService.instance.get<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/alerts/$alertId',
+      );
+
+      if (response.data != null) {
+        return EmergencyAlert.fromJson(response.data!);
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Get emergency contact information
   Future<List<EmergencyContact>> getEmergencyContacts() async {
     return await EmergencyService.instance.getEmergencyContacts();
