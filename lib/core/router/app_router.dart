@@ -13,6 +13,8 @@ import '../../features/checkpoints/screens/scanner_screen.dart';
 import '../../features/checkpoints/screens/checkpoint_list_screen.dart';
 import '../../features/patrols/screens/patrol_progress_screen.dart';
 import '../../features/patrols/screens/patrol_detail_screen.dart';
+import '../../features/patrols/screens/patrol_map_screen.dart';
+import '../../features/patrols/screens/patrol_completion_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/emergency.dart';
@@ -124,6 +126,26 @@ class AppRouter {
             patrolId: patrolId,
             action: action,
           );
+        },
+      ),
+      
+      GoRoute(
+        path: AppConstants.patrolMapRoute,
+        name: 'patrol_map',
+        builder: (context, state) {
+          final patrolId = state.uri.queryParameters['patrolId'];
+          return PatrolMapScreen(
+            patrolId: patrolId != null ? int.tryParse(patrolId) : null,
+          );
+        },
+      ),
+      
+      GoRoute(
+        path: '/patrol/:patrolId/complete',
+        name: 'patrol_complete',
+        builder: (context, state) {
+          final patrolId = int.parse(state.pathParameters['patrolId']!);
+          return PatrolCompletionScreen(patrolId: patrolId);
         },
       ),
     ],

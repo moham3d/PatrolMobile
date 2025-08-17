@@ -164,6 +164,170 @@ class CheckpointStatusIndicator extends StatelessWidget {
 
   Widget _buildSingleCheckpointIndicator(BuildContext context) {
     final currentCheckpoint = checkpoint!;
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: isCurrent ? 4 : 1,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Status indicator
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _getStatusColor(),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _getBorderColor(),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  _getStatusIcon(),
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              
+              const SizedBox(width: 16),
+              
+              // Checkpoint info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      currentCheckpoint.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isCurrent ? Theme.of(context).primaryColor : null,
+                      ),
+                    ),
+                    
+                    if (currentCheckpoint.description != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        currentCheckpoint.description!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Checkpoint details
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.qr_code,
+                          size: 16,
+                          color: currentCheckpoint.hasQRCode ? Colors.green : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'QR',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: currentCheckpoint.hasQRCode ? Colors.green : Colors.grey,
+                          ),
+                        ),
+                        
+                        const SizedBox(width: 16),
+                        
+                        Icon(
+                          Icons.nfc,
+                          size: 16,
+                          color: currentCheckpoint.hasNFCTag ? Colors.green : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'NFC',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: currentCheckpoint.hasNFCTag ? Colors.green : Colors.grey,
+                          ),
+                        ),
+                        
+                        if (currentCheckpoint.hasLocation) ...[
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.location_on,
+                            size: 16,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'GPS',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    
+                    // Status text
+                    if (isVisited || isCurrent || isNext) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _getStatusText(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: _getStatusColor(),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+              // Action button
+              if (showScanButton && (isCurrent || isNext)) ...[
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: onTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isCurrent ? Theme.of(context).primaryColor : Colors.orange,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  child: Text(
+                    isCurrent ? 'Scan Now' : 'Next',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ] else if (isVisited) ...[
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Completed',
+                    style: TextStyle(
+                      color: Colors.green.shade800,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Color _getStatusColor() {

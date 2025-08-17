@@ -50,6 +50,7 @@ class AppConstants {
   static const String patrolDetailRoute = '/patrol';
   static const String patrolMapRoute = '/patrol-map';
   static const String patrolMonitoringRoute = '/patrol-monitoring';
+  static const String patrolCompletionRoute = '/patrol-completion';
   
   // Additional storage keys
   static const String userRoleKey = 'user_role';
