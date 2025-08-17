@@ -250,6 +250,14 @@ class DashboardBody extends ConsumerWidget {
     
     // All roles can scan checkpoints and trigger SOS
     actions.add(QuickAction(
+      icon: Icons.sos,
+      title: 'Emergency SOS',
+      subtitle: 'Trigger Alert',
+      onTap: () => context.go(AppConstants.sosRoute),
+      enabled: true,
+    ));
+    
+    actions.add(QuickAction(
       icon: Icons.qr_code_scanner,
       title: 'Scan Checkpoint',
       subtitle: 'QR/NFC Scanner',
@@ -291,6 +299,15 @@ class DashboardBody extends ConsumerWidget {
         title: 'Emergency Response',
         subtitle: 'Manage Alerts',
         onTap: () => context.go('/emergency-response'),
+        enabled: true,
+      ));
+      
+      // Emergency dashboard for comprehensive emergency management
+      actions.add(QuickAction(
+        icon: Icons.dashboard,
+        title: 'Emergency Dashboard',
+        subtitle: 'Full Emergency View',
+        onTap: () => context.go(AppConstants.emergencyDashboardRoute),
         enabled: true,
       ));
     }

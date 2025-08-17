@@ -8,6 +8,7 @@ import '../../features/emergency/screens/emergency_response_screen.dart';
 import '../../features/emergency/screens/emergency_history_screen.dart';
 import '../../features/emergency/screens/emergency_contacts_screen.dart';
 import '../../features/emergency/screens/emergency_cancel_resolve_screen.dart';
+import '../../features/emergency/screens/emergency_dashboard_screen.dart';
 import '../../features/checkpoints/screens/scanner_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
@@ -55,6 +56,12 @@ class AppRouter {
         path: AppConstants.sosRoute,
         name: 'sos',
         builder: (context, state) => const SOSScreen(),
+      ),
+      
+      GoRoute(
+        path: '/emergency-dashboard',
+        name: 'emergency_dashboard',
+        builder: (context, state) => const EmergencyDashboardScreen(),
       ),
       
       GoRoute(
