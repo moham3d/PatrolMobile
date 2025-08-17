@@ -7,9 +7,11 @@ import '../../features/emergency/screens/sos_screen.dart';
 import '../../features/emergency/screens/emergency_response_screen.dart';
 import '../../features/emergency/screens/emergency_history_screen.dart';
 import '../../features/emergency/screens/emergency_contacts_screen.dart';
+import '../../features/emergency/screens/emergency_cancel_resolve_screen.dart';
 import '../../features/checkpoints/screens/scanner_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
+import '../models/emergency.dart';
 
 /// App routing configuration using GoRouter
 class AppRouter {
@@ -71,6 +73,15 @@ class AppRouter {
         path: '/emergency-contacts',
         name: 'emergency_contacts',
         builder: (context, state) => const EmergencyContactsScreen(),
+      ),
+      
+      GoRoute(
+        path: '/emergency/cancel-resolve',
+        name: 'emergency_cancel_resolve',
+        builder: (context, state) {
+          final alert = state.extra as EmergencyAlert;
+          return EmergencyCancelResolveScreen(alert: alert);
+        },
       ),
       
       // Checkpoint routes

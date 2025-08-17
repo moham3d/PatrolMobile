@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/providers/emergency_provider.dart';
 import '../../../core/models/emergency.dart';
 import '../../../core/constants/app_constants.dart';
+import 'emergency_cancel_resolve_screen.dart';
 
 /// Emergency response screen for supervisors to manage active alerts
 class EmergencyResponseScreen extends ConsumerStatefulWidget {
@@ -393,20 +394,25 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
   }
 
   void _resolveAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
-    final resolutionData = await _showEnhancedResolutionDialog(context);
-    if (resolutionData != null) {
+    // Navigate to the enhanced cancel/resolve screen
+    final result = await context.push('/emergency/cancel-resolve', extra: alert);
+    
+    if (result == true) {
+      // Alert was successfully resolved/cancelled, reload alerts
+      notifier.loadAlerts();
+    }
+  }
+
+  void _escalateAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
+    final escalationReason = await _showEscalationDialog(context);
+    if (escalationReason != null && escalationReason.isNotEmpty) {
       try {
-        await notifier.resolveAlert(
-          alert.id,
-          resolution: resolutionData['notes'],
-          resolutionType: resolutionData['type'],
-          followUpActions: resolutionData['followUp']?.cast<String>(),
-        );
+        await notifier.escalateAlert(alert.id, escalationReason);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Alert resolved with enhanced tracking'),
-              backgroundColor: Colors.green,
+              content: Text('Alert escalated successfully'),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -414,13 +420,64 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to resolve alert: $e'),
+              content: Text('Failed to escalate alert: $e'),
               backgroundColor: Colors.red,
             ),
           );
         }
       }
     }
+  }
+
+  Future<String?> _showEscalationDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.trending_up,
+              color: Colors.red.shade600,
+            ),
+            const SizedBox(width: 8),
+            const Text('Escalate Alert'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'This will immediately escalate the alert to higher-level personnel and trigger additional emergency protocols.',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'Escalation reason',
+                hintText: 'Why is this alert being escalated?',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Escalate'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<String?> _showAcknowledgmentDialog(BuildContext context) async {
@@ -766,80 +823,50 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
     );
   }
 
-  void _escalateAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
-    final escalationReason = await _showEscalationDialog(context);
-    if (escalationReason != null && escalationReason.isNotEmpty) {
-      try {
-        await notifier.escalateAlert(alert.id, escalationReason);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Alert escalated successfully'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} at ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return timestamp;
+    }
+  }
+
+  void _openLocationInMap(BuildContext context, EmergencyAlert alert) async {
+    if (alert.latitude == null || alert.longitude == null) return;
+    
+    try {
+      final lat = alert.latitude!;
+      final lng = alert.longitude!;
+      final url = Uri.parse('https://www.google.com/maps?q=$lat,$lng');
+      
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        // Fallback: show coordinates in a snackbar
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to escalate alert: $e'),
-              backgroundColor: Colors.red,
+              content: Text('Location: $lat, $lng'),
+              action: SnackBarAction(
+                label: 'Copy',
+                onPressed: () {
+                  // In a real app, copy to clipboard using flutter/services
+                },
+              ),
             ),
           );
         }
       }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cannot open location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-  }
-
-  Future<String?> _showEscalationDialog(BuildContext context) async {
-    final controller = TextEditingController();
-    
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.trending_up,
-              color: Colors.red.shade600,
-            ),
-            const SizedBox(width: 8),
-            const Text('Escalate Alert'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'This will immediately escalate the alert to higher-level personnel and trigger additional emergency protocols.',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Escalation reason',
-                hintText: 'Why is this alert being escalated?',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-              autofocus: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Escalate'),
-          ),
-        ],
-      ),
-    );
   }
 }
