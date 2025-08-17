@@ -183,13 +183,13 @@ dependencies:
     - [x] Create scanning feedback (success/error states)
     - [x] **Deliverables:** Working QR/NFC scanning, checkpoint verification
 
-- [ ] **Day 4-5: Patrol Progress & Checkpoint Management**
-    - [ ] Build patrol route display with flutter_map
-    - [ ] Create checkpoint progress tracking
-    - [ ] Implement patrol completion workflow
-    - [ ] Add checkpoint status indicators
-    - [ ] Create patrol history and reporting
-    - [ ] **Deliverables:** Patrol tracking, progress indicators, completion workflow
+- [x] **Day 4-5: Patrol Progress & Checkpoint Management**
+    - [x] Build patrol route display with flutter_map
+    - [x] Create checkpoint progress tracking
+    - [x] Implement patrol completion workflow
+    - [x] Add checkpoint status indicators
+    - [x] Create patrol history and reporting
+    - [x] **Deliverables:** Patrol tracking, progress indicators, completion workflow
 
 #### Week 4: Offline Support & Data Sync
 

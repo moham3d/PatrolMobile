@@ -678,11 +678,21 @@ class _PatrolDetailScreenState extends ConsumerState<PatrolDetailScreen>
     final patrolId = int.tryParse(widget.patrolId);
     if (patrolId == null) return;
 
-    // TODO: Get current location for GPS tracking
+    // Get current location for GPS tracking
+    Position? currentLocation;
+    try {
+      currentLocation = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+    } catch (e) {
+      // Continue without location if permission denied or GPS unavailable
+    }
+
     final success = await ref.read(currentPatrolProvider.notifier).startPatrol(
       patrolId,
-      // latitude: currentLocation?.latitude,
-      // longitude: currentLocation?.longitude,
+      latitude: currentLocation?.latitude,
+      longitude: currentLocation?.longitude,
+      accuracy: currentLocation?.accuracy,
     );
 
     if (success && mounted) {
