@@ -200,7 +200,8 @@ class LocationSharingService {
   Future<LocationData?> _getCurrentLocation(LocationSettings settings) async {
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: settings,
+        desiredAccuracy: settings.accuracy,
+        timeLimit: settings.timeLimit,
       );
       
       final locationData = LocationData.fromPosition(position);

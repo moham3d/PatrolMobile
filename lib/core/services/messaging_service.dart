@@ -87,10 +87,10 @@ class MessagingService {
   Future<void> initialize() async {
     // Listen to WebSocket messages for real-time message updates
     _webSocketService.messages.listen((wsMessage) {
-      if (wsMessage.type == 'new_message') {
-        _handleNewMessage(wsMessage.data);
-      } else if (wsMessage.type == 'emergency_broadcast') {
-        _handleEmergencyBroadcast(wsMessage.data);
+      if (wsMessage.type == 'new_message' && wsMessage.data != null) {
+        _handleNewMessage(wsMessage.data!);
+      } else if (wsMessage.type == 'emergency_broadcast' && wsMessage.data != null) {
+        _handleEmergencyBroadcast(wsMessage.data!);
       }
     });
     
