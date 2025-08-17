@@ -322,6 +322,15 @@ class DashboardBody extends ConsumerWidget {
         onTap: () => context.go(AppConstants.emergencyDashboardRoute),
         enabled: true,
       ));
+      
+      // Performance monitoring for supervisors+
+      actions.add(QuickAction(
+        icon: Icons.battery_saver,
+        title: 'Performance & Battery',
+        subtitle: 'System Optimization',
+        onTap: () => context.go(AppConstants.performanceRoute),
+        enabled: true,
+      ));
     }
     
     // Site managers and above can access analytics

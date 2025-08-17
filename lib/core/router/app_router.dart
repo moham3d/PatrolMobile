@@ -16,6 +16,7 @@ import '../../features/patrols/screens/patrol_detail_screen.dart';
 import '../../features/patrols/screens/patrol_map_screen.dart';
 import '../../features/patrols/screens/patrol_completion_screen.dart';
 import '../../features/incidents/screens/incident_report_screen.dart';
+import '../../features/performance/screens/performance_monitoring_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/emergency.dart';
@@ -102,6 +103,13 @@ class AppRouter {
         path: AppConstants.incidentReportRoute,
         name: 'incident_report',
         builder: (context, state) => const IncidentReportScreen(),
+      ),
+      
+      // Performance routes
+      GoRoute(
+        path: AppConstants.performanceRoute,
+        name: 'performance',
+        builder: (context, state) => const PerformanceMonitoringScreen(),
       ),
       
       // Checkpoint routes
