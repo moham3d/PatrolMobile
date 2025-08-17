@@ -267,7 +267,7 @@ class _EmergencyHistoryScreenState extends ConsumerState<EmergencyHistoryScreen>
               
               // Alert description
               Text(
-                alert.description,
+                alert.description ?? 'No description available',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
@@ -383,7 +383,7 @@ class _EmergencyHistoryScreenState extends ConsumerState<EmergencyHistoryScreen>
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       filtered = filtered.where((alert) =>
-        alert.description.toLowerCase().contains(query) ||
+        (alert.description?.toLowerCase().contains(query) ?? false) ||
         alert.alertType.toLowerCase().contains(query) ||
         alert.severity.toLowerCase().contains(query) ||
         (alert.userName?.toLowerCase().contains(query) ?? false) ||
@@ -639,7 +639,7 @@ class EmergencyHistoryDetailSheet extends StatelessWidget {
           _buildDetailRow(context, 'Type', alert.alertType.toUpperCase()),
           _buildDetailRow(context, 'Severity', alert.severity.toUpperCase()),
           _buildDetailRow(context, 'Status', alert.status.toUpperCase()),
-          _buildDetailRow(context, 'Description', alert.description),
+          _buildDetailRow(context, 'Description', alert.description ?? 'No description available'),
           _buildDetailRow(context, 'User', alert.userName ?? 'User #${alert.userId}'),
           _buildDetailRow(context, 'Triggered At', _formatFullDateTime(alert.triggeredAt)),
           
