@@ -27,6 +27,8 @@ class Checkpoint {
   final String createdAt;
   @JsonKey(name: 'updated_at')
   final String updatedAt;
+  @JsonKey(name: 'last_visit_at')
+  final String? lastVisitAt;
 
   const Checkpoint({
     required this.id,
@@ -43,6 +45,7 @@ class Checkpoint {
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
+    this.lastVisitAt,
   });
 
   factory Checkpoint.fromJson(Map<String, dynamic> json) => 

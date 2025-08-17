@@ -1,5 +1,3 @@
-import '../models/checkpoint.dart';
-
 /// Patrol history entry model
 class PatrolHistoryEntry {
   final int id;

@@ -370,11 +370,12 @@ class PatrolRoute {
 
 /// Simple patrol action request for API calls
 class PatrolActionRequest {
-  final String action; // 'start', 'end', 'pause', 'resume'
+  final String action; // 'start', 'end', 'pause', 'resume', 'complete', 'cancel'
   final double? latitude;
   final double? longitude;
   final double? locationAccuracy;
   final String? notes;
+  final String? reason; // for cancel action
   final String deviceTimestamp;
 
   const PatrolActionRequest({
@@ -383,6 +384,7 @@ class PatrolActionRequest {
     this.longitude,
     this.locationAccuracy,
     this.notes,
+    this.reason,
     required this.deviceTimestamp,
   });
 
@@ -393,6 +395,7 @@ class PatrolActionRequest {
       longitude: (json['longitude'] as num?)?.toDouble(),
       locationAccuracy: (json['location_accuracy'] as num?)?.toDouble(),
       notes: json['notes'] as String?,
+      reason: json['reason'] as String?,
       deviceTimestamp: json['device_timestamp'] as String,
     );
   }
@@ -404,6 +407,7 @@ class PatrolActionRequest {
       'longitude': longitude,
       'location_accuracy': locationAccuracy,
       'notes': notes,
+      'reason': reason,
       'device_timestamp': deviceTimestamp,
     };
   }
@@ -434,6 +438,42 @@ class PatrolActionRequest {
   }) {
     return PatrolActionRequest(
       action: 'end',
+      latitude: latitude,
+      longitude: longitude,
+      locationAccuracy: accuracy,
+      notes: notes,
+      deviceTimestamp: DateTime.now().toIso8601String(),
+    );
+  }
+
+  /// Create complete patrol request
+  factory PatrolActionRequest.complete({
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? notes,
+  }) {
+    return PatrolActionRequest(
+      action: 'complete',
+      latitude: latitude,
+      longitude: longitude,
+      locationAccuracy: accuracy,
+      notes: notes,
+      deviceTimestamp: DateTime.now().toIso8601String(),
+    );
+  }
+
+  /// Create cancel patrol request
+  factory PatrolActionRequest.cancel({
+    String? reason,
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? notes,
+  }) {
+    return PatrolActionRequest(
+      action: 'cancel',
+      reason: reason,
       latitude: latitude,
       longitude: longitude,
       locationAccuracy: accuracy,
@@ -482,118 +522,5 @@ class PatrolActionResponse {
   @override
   String toString() {
     return 'PatrolActionResponse(success: $success, patrolId: $patrolId, status: $status)';
-  }
-}
-
-/// Patrol history entry
-class PatrolHistoryEntry {
-  final int id;
-  final int patrolId;
-  final String patrolTitle;
-  final int completedBy;
-  final String? completedByName;
-  final String startTime;
-  final String? endTime;
-  final int? totalDuration; // in minutes
-  final int checkpointsVisited;
-  final int totalCheckpoints;
-  final double completionPercentage;
-  final String status;
-  final String? notes;
-  final String createdAt;
-
-  const PatrolHistoryEntry({
-    required this.id,
-    required this.patrolId,
-    required this.patrolTitle,
-    required this.completedBy,
-    this.completedByName,
-    required this.startTime,
-    this.endTime,
-    this.totalDuration,
-    required this.checkpointsVisited,
-    required this.totalCheckpoints,
-    required this.completionPercentage,
-    required this.status,
-    this.notes,
-    required this.createdAt,
-  });
-
-  factory PatrolHistoryEntry.fromJson(Map<String, dynamic> json) {
-    return PatrolHistoryEntry(
-      id: json['id'] as int,
-      patrolId: json['patrol_id'] as int,
-      patrolTitle: json['patrol_title'] as String? ?? 'Patrol',
-      completedBy: json['completed_by'] as int,
-      completedByName: json['completed_by_name'] as String?,
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String?,
-      totalDuration: json['total_duration'] as int?,
-      checkpointsVisited: json['checkpoints_visited'] as int? ?? 0,
-      totalCheckpoints: json['total_checkpoints'] as int? ?? 0,
-      completionPercentage: (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] as String,
-      notes: json['notes'] as String?,
-      createdAt: json['created_at'] as String? ?? DateTime.now().toIso8601String(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'patrol_id': patrolId,
-      'patrol_title': patrolTitle,
-      'completed_by': completedBy,
-      'completed_by_name': completedByName,
-      'start_time': startTime,
-      'end_time': endTime,
-      'total_duration': totalDuration,
-      'checkpoints_visited': checkpointsVisited,
-      'total_checkpoints': totalCheckpoints,
-      'completion_percentage': completionPercentage,
-      'status': status,
-      'notes': notes,
-      'created_at': createdAt,
-    };
-  }
-
-  /// Get start time as DateTime
-  DateTime get startDateTime => DateTime.parse(startTime);
-
-  /// Get end time as DateTime
-  DateTime? get endDateTime {
-    if (endTime == null) return null;
-    return DateTime.tryParse(endTime!);
-  }
-
-  /// Get total duration as Duration object
-  Duration? get totalDurationObject {
-    if (totalDuration == null) return null;
-    return Duration(minutes: totalDuration!);
-  }
-
-  /// Get formatted duration
-  String get formattedDuration {
-    final duration = totalDurationObject;
-    if (duration == null) return 'In progress';
-    
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes % 60;
-    
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    }
-    return '${minutes}m';
-  }
-
-  /// Check if patrol is completed
-  bool get isCompleted => status == 'completed' && endTime != null;
-
-  /// Check if patrol is in progress
-  bool get isInProgress => status == 'in_progress' && endTime == null;
-
-  @override
-  String toString() {
-    return 'PatrolHistoryEntry(id: $id, title: $patrolTitle, status: $status, completion: ${completionPercentage.toStringAsFixed(1)}%)';
   }
 }

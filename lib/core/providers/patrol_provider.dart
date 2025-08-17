@@ -537,7 +537,13 @@ class PatrolDetailNotifier extends StateNotifier<PatrolDetailState> {
   /// Complete patrol
   Future<void> completePatrol(Map<String, dynamic> completionData) async {
     try {
-      await _patrolService.completePatrol(patrolId, completionData);
+      await _patrolService.completePatrol(
+        patrolId,
+        latitude: completionData['latitude'],
+        longitude: completionData['longitude'],
+        accuracy: completionData['accuracy'],
+        notes: completionData['notes'],
+      );
       // Reload patrol data after completion
       await loadPatrol();
     } catch (e) {
@@ -570,7 +576,10 @@ class PatrolDetailNotifier extends StateNotifier<PatrolDetailState> {
   /// Cancel patrol
   Future<void> cancelPatrol(String reason) async {
     try {
-      await _patrolService.cancelPatrol(patrolId, reason);
+      await _patrolService.cancelPatrol(
+        patrolId,
+        reason: reason,
+      );
       // Reload patrol data after cancellation
       await loadPatrol();
     } catch (e) {

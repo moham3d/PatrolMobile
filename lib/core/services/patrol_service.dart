@@ -155,6 +155,60 @@ class PatrolService {
     }
   }
 
+  /// Complete patrol
+  Future<PatrolActionResponse> completePatrol(int patrolId, {
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? notes,
+  }) async {
+    try {
+      final request = PatrolActionRequest.complete(
+        latitude: latitude,
+        longitude: longitude,
+        accuracy: accuracy,
+        notes: notes,
+      );
+
+      final response = await ApiService.instance.post<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/patrols/$patrolId/complete',
+        data: request.toJson(),
+      );
+
+      return PatrolActionResponse.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Cancel patrol
+  Future<PatrolActionResponse> cancelPatrol(int patrolId, {
+    String? reason,
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? notes,
+  }) async {
+    try {
+      final request = PatrolActionRequest.cancel(
+        reason: reason,
+        latitude: latitude,
+        longitude: longitude,
+        accuracy: accuracy,
+        notes: notes,
+      );
+
+      final response = await ApiService.instance.post<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/patrols/$patrolId/cancel',
+        data: request.toJson(),
+      );
+
+      return PatrolActionResponse.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   /// Perform patrol action (generic)
   Future<PatrolActionResponse> performPatrolAction(
     int patrolId,
