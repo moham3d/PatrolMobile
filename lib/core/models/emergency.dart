@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'emergency.g.dart';
@@ -201,4 +202,65 @@ class EmergencyLocation {
   }
 }
 
-import 'package:flutter/material.dart';
+/// Emergency contact model
+@JsonSerializable()
+class EmergencyContact {
+  final int id;
+  final String name;
+  final String phone;
+  final String type;
+  final String? email;
+  final String? description;
+  @JsonKey(name: 'is_active')
+  final bool isActive;
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+  @JsonKey(name: 'updated_at')
+  final String? updatedAt;
+
+  const EmergencyContact({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.type,
+    this.email,
+    this.description,
+    required this.isActive,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory EmergencyContact.fromJson(Map<String, dynamic> json) => 
+      _$EmergencyContactFromJson(json);
+  Map<String, dynamic> toJson() => _$EmergencyContactToJson(this);
+
+  /// Get display name with type
+  String get displayName {
+    return '$name ($type)';
+  }
+
+  /// Get icon for contact type
+  IconData get icon {
+    switch (type.toLowerCase()) {
+      case 'emergency':
+        return Icons.local_hospital;
+      case 'security':
+        return Icons.security;
+      case 'management':
+        return Icons.business_center;
+      case 'police':
+        return Icons.local_police;
+      case 'fire':
+        return Icons.local_fire_department;
+      case 'medical':
+        return Icons.medical_services;
+      default:
+        return Icons.phone;
+    }
+  }
+
+  @override
+  String toString() {
+    return 'EmergencyContact(id: $id, name: $name, phone: $phone, type: $type)';
+  }
+}

@@ -35,6 +35,9 @@ class AppConstants {
   static const String dashboardRoute = '/dashboard';
   static const String sosRoute = '/sos';
   static const String scannerRoute = '/scanner';
+  static const String emergencyResponseRoute = '/emergency-response';
+  static const String emergencyHistoryRoute = '/emergency-history';
+  static const String emergencyContactsRoute = '/emergency-contacts';
   
   // Additional storage keys
   static const String userRoleKey = 'user_role';

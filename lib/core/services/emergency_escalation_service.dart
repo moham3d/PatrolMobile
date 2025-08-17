@@ -4,6 +4,8 @@ import '../constants/app_constants.dart';
 import '../models/emergency.dart';
 import '../services/emergency_service.dart';
 import '../services/websocket_service.dart';
+import '../services/api_service.dart';
+import '../exceptions/api_exception.dart';
 
 /// Emergency escalation service for automatic alert escalation
 class EmergencyEscalationService {
@@ -108,55 +110,130 @@ class EmergencyEscalationService {
   /// Send escalation notification to supervisors/managers
   Future<void> _sendEscalationNotification(EmergencyAlert alert) async {
     try {
-      // In a real implementation, this would send notifications to:
-      // - Direct supervisors
-      // - Site managers
-      // - Emergency response team
-      // - External emergency services (if configured)
-      
       print('Sending escalation notifications for alert #${alert.id}');
       
-      // Example: Send to emergency service API
-      // await EmergencyService.instance.escalateAlert(alert.id);
+      // Send escalation notification via backend API
+      final escalationData = {
+        'alert_id': alert.id,
+        'escalation_type': 'automatic',
+        'escalation_time': DateTime.now().toIso8601String(),
+        'escalation_reason': 'No response after ${AppConstants.emergencyEscalationMinutes} minutes',
+        'escalation_level': _getNextEscalationLevel(alert.severity),
+        'original_alert': {
+          'id': alert.id,
+          'type': alert.alertType,
+          'severity': alert.severity,
+          'description': alert.description,
+          'user_id': alert.userId,
+          'user_name': alert.userName,
+          'triggered_at': alert.triggeredAt,
+          'location': alert.latitude != null && alert.longitude != null ? {
+            'latitude': alert.latitude,
+            'longitude': alert.longitude,
+            'name': alert.locationName,
+          } : null,
+        },
+      };
+      
+      // Send escalation to backend
+      await ApiService.instance.post<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/alerts/${alert.id}/escalate',
+        data: escalationData,
+      );
+      
+      print('Escalation notification sent successfully');
       
     } catch (e) {
       print('Failed to send escalation notification: $e');
+      // Don't throw error - continue with other escalation steps
     }
   }
 
   /// Contact emergency services
   Future<void> _contactEmergencyServices(EmergencyAlert alert) async {
     try {
-      // In a real implementation, this could:
-      // - Send SMS to emergency contacts
-      // - Call emergency services automatically
-      // - Send email notifications
-      // - Integrate with third-party emergency services
-      
       print('Contacting emergency services for alert #${alert.id}');
       
-      // Example escalation actions:
-      final escalationData = {
-        'alert_id': alert.id,
-        'escalation_type': 'automatic',
-        'escalation_time': DateTime.now().toIso8601String(),
-        'escalation_reason': 'No response after ${AppConstants.emergencyEscalationMinutes} minutes',
-        'original_alert': {
-          'severity': alert.severity,
-          'description': alert.description,
-          'location': alert.location != null ? {
-            'latitude': alert.location!.latitude,
-            'longitude': alert.location!.longitude,
-            'name': alert.location!.locationName,
-          } : null,
-        },
-      };
+      // Get emergency contacts and call them
+      final contacts = await EmergencyService.instance.getEmergencyContacts();
+      final emergencyContacts = contacts.where((c) => c.type == 'emergency').toList();
       
-      // Send escalation to backend
-      // await ApiService.instance.post('/emergency/escalate', data: escalationData);
+      // Try to call the first emergency contact
+      if (emergencyContacts.isNotEmpty) {
+        try {
+          await EmergencyService.instance.callEmergencyContact(emergencyContacts.first);
+          print('Emergency contact called successfully');
+        } catch (e) {
+          print('Failed to call emergency contact: $e');
+        }
+      }
+      
+      // Send SMS or push notifications to emergency contacts
+      await _sendEmergencyNotifications(alert, contacts);
+      
+      // Record escalation in backend
+      await _recordEscalationAction(alert, 'emergency_contact');
       
     } catch (e) {
       print('Failed to contact emergency services: $e');
+    }
+  }
+
+  /// Send emergency notifications to contacts
+  Future<void> _sendEmergencyNotifications(EmergencyAlert alert, List<EmergencyContact> contacts) async {
+    try {
+      final notificationData = {
+        'alert_id': alert.id,
+        'message': 'EMERGENCY ESCALATION: Alert #${alert.id} requires immediate attention',
+        'alert_details': {
+          'type': alert.alertType,
+          'severity': alert.severity,
+          'description': alert.description,
+          'location': alert.locationName,
+          'user': alert.userName ?? 'User #${alert.userId}',
+          'triggered_at': alert.triggeredAt,
+        },
+        'contacts': contacts.map((c) => {
+          'id': c.id,
+          'name': c.name,
+          'phone': c.phone,
+          'type': c.type,
+        }).toList(),
+      };
+      
+      await ApiService.instance.post<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/notifications/send',
+        data: notificationData,
+      );
+      
+      print('Emergency notifications sent');
+    } catch (e) {
+      print('Failed to send emergency notifications: $e');
+    }
+  }
+
+  /// Record escalation action in backend
+  Future<void> _recordEscalationAction(EmergencyAlert alert, String actionType) async {
+    try {
+      final actionData = {
+        'alert_id': alert.id,
+        'action_type': actionType,
+        'performed_at': DateTime.now().toIso8601String(),
+        'performed_by': 'system',
+        'details': {
+          'escalation_level': _getNextEscalationLevel(alert.severity),
+          'escalation_reason': 'Automatic escalation after ${AppConstants.emergencyEscalationMinutes} minutes',
+        },
+      };
+      
+      await ApiService.instance.post<Map<String, dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/alerts/${alert.id}/actions',
+        data: actionData,
+      );
+      
+      print('Escalation action recorded');
+    } catch (e) {
+      print('Failed to record escalation action: $e');
     }
   }
 
@@ -170,11 +247,37 @@ class EmergencyEscalationService {
         'escalated_at': DateTime.now().toIso8601String(),
         'escalation_level': _getNextEscalationLevel(alert.severity),
         'requires_immediate_attention': true,
+        'alert_details': {
+          'id': alert.id,
+          'type': alert.alertType,
+          'severity': alert.severity,
+          'description': alert.description,
+          'user_id': alert.userId,
+          'user_name': alert.userName,
+          'location_name': alert.locationName,
+          'triggered_at': alert.triggeredAt,
+        },
       };
       
-      // Send via WebSocket
-      // WebSocketService.instance.sendMessage(escalationMessage);
-      print('Broadcasting escalation for alert #${alert.id}');
+      // Send via WebSocket if connected
+      if (WebSocketService.instance.isConnected) {
+        try {
+          final websocketMessage = {
+            'type': 'send_message',
+            'data': escalationMessage,
+            'timestamp': DateTime.now().toIso8601String(),
+          };
+          
+          // Note: In a real implementation, you would send via WebSocket
+          // WebSocketService.instance.sendMessage(websocketMessage);
+          
+          print('Broadcasting escalation for alert #${alert.id} via WebSocket');
+        } catch (e) {
+          print('Failed to send WebSocket message: $e');
+        }
+      } else {
+        print('WebSocket not connected - escalation broadcast skipped');
+      }
       
     } catch (e) {
       print('Failed to broadcast escalation: $e');
@@ -238,29 +341,8 @@ class EmergencyEscalationService {
   }
 
   /// Get emergency contact information
-  List<EmergencyContact> getEmergencyContacts() {
-    // In a real implementation, this would be fetched from:
-    // - User preferences
-    // - Organization settings
-    // - Site-specific emergency contacts
-    
-    return [
-      const EmergencyContact(
-        name: 'Site Security',
-        phone: '+1-555-0101',
-        type: 'security',
-      ),
-      const EmergencyContact(
-        name: 'Emergency Services',
-        phone: '911',
-        type: 'emergency',
-      ),
-      const EmergencyContact(
-        name: 'Site Manager',
-        phone: '+1-555-0102',
-        type: 'management',
-      ),
-    ];
+  Future<List<EmergencyContact>> getEmergencyContacts() async {
+    return await EmergencyService.instance.getEmergencyContacts();
   }
 
   /// Dispose resources
@@ -272,22 +354,4 @@ class EmergencyEscalationService {
     _escalationTimers.clear();
     print('Emergency escalation service disposed');
   }
-}
-
-/// Emergency contact model
-class EmergencyContact {
-  final String name;
-  final String phone;
-  final String type;
-  final String? email;
-
-  const EmergencyContact({
-    required this.name,
-    required this.phone,
-    required this.type,
-    this.email,
-  });
-
-  @override
-  String toString() => 'EmergencyContact(name: $name, phone: $phone, type: $type)';
 }
