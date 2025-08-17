@@ -193,13 +193,13 @@ dependencies:
 
 #### Week 4: Offline Support & Data Sync
 
-- [ ] **Day 1-3: Offline Checkpoint Logging**
-    - [ ] Set up local SQLite database with sqflite
-    - [ ] Implement offline checkpoint scanning and queuing
-    - [ ] Create data synchronization service
-    - [ ] Build conflict resolution for offline data
-    - [ ] Implement connectivity monitoring
-    - [ ] **Deliverables:** Offline capability, data sync, conflict resolution
+- [x] **Day 1-3: Offline Checkpoint Logging**
+    - [x] Set up local SQLite database with sqflite
+    - [x] Implement offline checkpoint scanning and queuing
+    - [x] Create data synchronization service
+    - [x] Build conflict resolution for offline data
+    - [x] Implement connectivity monitoring
+    - [x] **Deliverables:** Offline capability, data sync, conflict resolution
 
 - [ ] **Day 4-5: Real-Time Features & Communication**
     - [ ] Implement WebSocket connection for live updates

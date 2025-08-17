@@ -7,17 +7,27 @@ import 'core/providers/auth_provider.dart';
 import 'core/services/api_service.dart';
 import 'core/services/emergency_escalation_service.dart';
 import 'core/services/emergency_response_service.dart';
+import 'core/services/database_service.dart';
+import 'core/services/connectivity_service.dart';
+import 'core/services/sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize API service
+  // Initialize core services
   await ApiService.instance.initialize();
   
-  // Initialize emergency escalation service
-  await EmergencyEscalationService.instance.initialize();
+  // Initialize offline database
+  await DatabaseService.instance.database;
   
-  // Initialize emergency response service
+  // Initialize connectivity monitoring
+  await ConnectivityService.instance.initialize();
+  
+  // Initialize data sync service
+  await SyncService.instance.initialize();
+  
+  // Initialize emergency services
+  await EmergencyEscalationService.instance.initialize();
   EmergencyResponseService.instance;
   
   runApp(
