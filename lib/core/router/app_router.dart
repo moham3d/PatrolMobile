@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/emergency/screens/sos_screen.dart';
+import '../../features/emergency/screens/emergency_response_screen.dart';
 import '../../features/checkpoints/screens/scanner_screen.dart';
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
@@ -50,6 +51,12 @@ class AppRouter {
         path: AppConstants.sosRoute,
         name: 'sos',
         builder: (context, state) => const SOSScreen(),
+      ),
+      
+      GoRoute(
+        path: '/emergency-response',
+        name: 'emergency_response',
+        builder: (context, state) => const EmergencyResponseScreen(),
       ),
       
       // Checkpoint routes

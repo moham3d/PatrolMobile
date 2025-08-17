@@ -13,6 +13,23 @@ class EmergencyService {
   
   EmergencyService._internal();
 
+  /// Check if location permission is granted
+  Future<bool> hasLocationPermission() async {
+    final permission = await Permission.location.status;
+    return permission == PermissionStatus.granted;
+  }
+
+  /// Request location permission
+  Future<bool> requestLocationPermission() async {
+    final status = await Permission.location.request();
+    return status == PermissionStatus.granted;
+  }
+
+  /// Check if location service is enabled
+  Future<bool> isLocationServiceEnabled() async {
+    return await Geolocator.isLocationServiceEnabled();
+  }
+
   /// Trigger SOS emergency alert
   Future<EmergencyAlertResponse> triggerSOS({
     String? description,

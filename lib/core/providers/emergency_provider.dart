@@ -1,15 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/emergency.dart';
 import '../services/emergency_service.dart';
+import '../services/emergency_escalation_service.dart';
 
 /// Emergency service provider
 final emergencyServiceProvider = Provider<EmergencyService>((ref) {
   return EmergencyService.instance;
 });
 
+/// Emergency escalation service provider
+final emergencyEscalationServiceProvider = Provider<EmergencyEscalationService>((ref) {
+  return EmergencyEscalationService.instance;
+});
+
 /// Emergency alerts provider
 final emergencyAlertsProvider = StateNotifierProvider<EmergencyAlertsNotifier, EmergencyAlertsState>((ref) {
-  return EmergencyAlertsNotifier(ref.read(emergencyServiceProvider));
+  return EmergencyAlertsNotifier(
+    ref.read(emergencyServiceProvider),
+    ref.read(emergencyEscalationServiceProvider),
+  );
 });
 
 /// Active emergency alert provider
@@ -32,8 +41,9 @@ final locationServiceProvider = FutureProvider<bool>((ref) async {
 /// Emergency alerts state notifier
 class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
   final EmergencyService _emergencyService;
+  final EmergencyEscalationService _escalationService;
   
-  EmergencyAlertsNotifier(this._emergencyService) : super(const EmergencyAlertsState.initial());
+  EmergencyAlertsNotifier(this._emergencyService, this._escalationService) : super(const EmergencyAlertsState.initial());
 
   /// Trigger SOS emergency alert
   Future<EmergencyAlert?> triggerSOS({String? description}) async {
@@ -46,6 +56,12 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
       );
       
       if (response.success) {
+        // Broadcast emergency alert via WebSocket
+        _broadcastEmergencyAlert(response.alert);
+        
+        // Start escalation timer
+        _escalationService.startEscalation(response.alert);
+        
         state = EmergencyAlertsState.triggered(response.alert);
         return response.alert;
       } else {
@@ -69,6 +85,12 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
       );
       
       if (response.success) {
+        // Broadcast emergency alert via WebSocket
+        _broadcastEmergencyAlert(response.alert);
+        
+        // Start escalation timer
+        _escalationService.startEscalation(response.alert);
+        
         state = EmergencyAlertsState.triggered(response.alert);
         return response.alert;
       } else {
@@ -78,6 +100,18 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
     } catch (e) {
       state = EmergencyAlertsState.error(e.toString());
       return null;
+    }
+  }
+
+  /// Broadcast emergency alert via WebSocket
+  void _broadcastEmergencyAlert(EmergencyAlert alert) {
+    try {
+      // Note: WebSocketService will be injected via provider in the actual implementation
+      // For now, we'll just print that the alert would be broadcast
+      print('Broadcasting emergency alert via WebSocket: ${alert.id}');
+      // WebSocketService.instance.sendEmergencyAlert(alert);
+    } catch (e) {
+      print('Failed to broadcast emergency alert: $e');
     }
   }
 
@@ -97,6 +131,10 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
   Future<void> acknowledgeAlert(int alertId) async {
     try {
       await _emergencyService.acknowledgeAlert(alertId);
+      
+      // Cancel escalation when acknowledged
+      _escalationService.cancelEscalation(alertId);
+      
       // Reload alerts to reflect changes
       await loadAlerts();
     } catch (e) {
@@ -108,6 +146,10 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
   Future<void> resolveAlert(int alertId, {String? resolution}) async {
     try {
       await _emergencyService.resolveAlert(alertId, resolution: resolution);
+      
+      // Cancel escalation when resolved
+      _escalationService.cancelEscalation(alertId);
+      
       // If this was the active alert, clear it
       if (state is Triggered) {
         final triggeredState = state as Triggered;
@@ -126,6 +168,10 @@ class EmergencyAlertsNotifier extends StateNotifier<EmergencyAlertsState> {
   Future<void> cancelAlert(int alertId, {String? reason}) async {
     try {
       await _emergencyService.cancelAlert(alertId, reason: reason);
+      
+      // Cancel escalation when cancelled
+      _escalationService.cancelEscalation(alertId);
+      
       // If this was the active alert, mark as cancelled
       if (state is Triggered) {
         final triggeredState = state as Triggered;
