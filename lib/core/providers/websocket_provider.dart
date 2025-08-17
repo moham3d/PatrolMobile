@@ -27,7 +27,8 @@ final webSocketAutoConnectProvider = Provider<void>((ref) {
   
   if (authState is Authenticated) {
     final user = authState.user;
-    connectionNotifier.connect(user.id.toString(), 'token_placeholder');
+    final token = authState.token; // Use real token from auth state
+    connectionNotifier.connect(user.id.toString(), token);
   } else {
     connectionNotifier.disconnect();
   }

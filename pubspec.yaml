@@ -29,6 +29,7 @@ dependencies:
   # Emergency & Communication
   web_socket_channel: ^2.4.0
   flutter_local_notifications: ^16.1.0
+  firebase_messaging: ^14.7.3
   
   # Scanning & NFC
   qr_code_scanner: ^1.0.1

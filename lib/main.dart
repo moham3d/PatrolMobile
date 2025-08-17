@@ -10,6 +10,9 @@ import 'core/services/emergency_response_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/sync_service.dart';
+import 'core/services/notification_service.dart';
+import 'core/services/messaging_service.dart';
+import 'core/services/location_sharing_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +32,15 @@ void main() async {
   // Initialize emergency services
   await EmergencyEscalationService.instance.initialize();
   EmergencyResponseService.instance;
+  
+  // Initialize notification service
+  await NotificationService.instance.initialize();
+  
+  // Initialize messaging service
+  await MessagingService.instance.initialize();
+  
+  // Initialize location sharing service
+  await LocationSharingService.instance.initialize();
   
   runApp(
     const ProviderScope(
