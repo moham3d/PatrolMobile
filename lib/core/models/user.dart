@@ -79,6 +79,33 @@ class User {
     }
   }
 
+  /// Check if user can access specific role level
+  bool canAccess(String requiredRole) {
+    final userPriority = rolePriority;
+    final requiredPriority = _getRolePriority(requiredRole);
+    
+    return userPriority >= requiredPriority;
+  }
+
+  /// Get role priority for comparison
+  int _getRolePriority(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return 4;
+      case 'operations manager':
+        return 3;
+      case 'site manager':
+        return 2;
+      case 'supervisor':
+        return 1;
+      case 'guard':
+      case 'mobile guard':
+        return 0;
+      default:
+        return -1;
+    }
+  }
+
   @override
   String toString() {
     return 'User(id: $id, username: $username, role: $role, displayName: $displayName)';
