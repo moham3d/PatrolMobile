@@ -67,18 +67,17 @@ void main() {
       expect(messageFromJson.isUrgent, equals(message.isUrgent));
     });
 
-    test('LocationData model should create from position correctly', () {
-      // Mock position data
-      final mockPosition = MockPosition(
+    test('LocationData model should create correctly', () {
+      // Test with direct data
+      final locationData = LocationData(
         latitude: 37.7749,
         longitude: -122.4194,
         accuracy: 5.0,
         timestamp: DateTime(2024, 1, 1, 12, 0, 0),
         speed: 10.0,
         heading: 45.0,
+        address: 'San Francisco, CA',
       );
-
-      final locationData = LocationData.fromPosition(mockPosition, address: 'San Francisco, CA');
       
       expect(locationData.latitude, equals(37.7749));
       expect(locationData.longitude, equals(-122.4194));
@@ -166,24 +165,5 @@ void main() {
         expect(message.metadata?['status'], equals('completed'));
       });
     });
-  });
-}
-
-/// Mock Position class for testing
-class MockPosition {
-  final double latitude;
-  final double longitude;
-  final double accuracy;
-  final DateTime timestamp;
-  final double speed;
-  final double heading;
-
-  MockPosition({
-    required this.latitude,
-    required this.longitude,
-    required this.accuracy,
-    required this.timestamp,
-    required this.speed,
-    required this.heading,
   });
 }

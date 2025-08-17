@@ -93,7 +93,7 @@ class WebSocketService {
     _channel?.sink.close(status.goingAway);
     _channel = null;
     
-    _messageController.add(const WebSocketMessage.disconnected());
+    _messageController.add(WebSocketMessage.disconnected());
   }
   
   /// Send emergency alert via WebSocket
@@ -110,10 +110,10 @@ class WebSocketService {
         'user_id': alert.userId,
         'severity': alert.severity,
         'description': alert.description,
-        'location': alert.location != null ? {
-          'latitude': alert.location!.latitude,
-          'longitude': alert.location!.longitude,
-          'address': alert.location!.locationName,
+        'location': (alert.latitude != null && alert.longitude != null) ? {
+          'latitude': alert.latitude,
+          'longitude': alert.longitude,
+          'address': alert.locationName,
         } : null,
         'triggered_at': alert.triggeredAt,
         'status': alert.status,
@@ -198,7 +198,7 @@ class WebSocketService {
     print('WebSocket disconnected');
     _isConnected = false;
     _heartbeatTimer?.cancel();
-    _messageController.add(const WebSocketMessage.disconnected());
+    _messageController.add(WebSocketMessage.disconnected());
     _scheduleReconnect();
   }
   
@@ -206,7 +206,7 @@ class WebSocketService {
   void _scheduleReconnect() {
     if (_reconnectAttempts >= _maxReconnectAttempts) {
       print('Max reconnection attempts reached');
-      _messageController.add(const WebSocketMessage.error('Max reconnection attempts reached'));
+      _messageController.add(WebSocketMessage.error('Max reconnection attempts reached'));
       return;
     }
     

@@ -315,26 +315,6 @@ class EmergencyService {
     }
   }
 
-  /// Check if location permission is granted
-  Future<bool> hasLocationPermission() async {
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      return permission == LocationPermission.always || 
-             permission == LocationPermission.whileInUse;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Check if location services are enabled
-  Future<bool> isLocationServiceEnabled() async {
-    try {
-      return await Geolocator.isLocationServiceEnabled();
-    } catch (e) {
-      return false;
-    }
-  }
-
   /// Get distance between two points (useful for location tracking)
   double getDistance(double lat1, double lon1, double lat2, double lon2) {
     return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
