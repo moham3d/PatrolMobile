@@ -136,6 +136,27 @@ class WebSocketService {
     });
   }
   
+  /// Send patrol status update
+  void sendPatrolStatusUpdate(String status, {Map<String, dynamic>? metadata}) {
+    if (!_isConnected) return;
+    
+    _sendMessage({
+      'type': 'patrol_status',
+      'data': {
+        'status': status,
+        'user_id': _userId,
+        'timestamp': DateTime.now().toIso8601String(),
+        'metadata': metadata,
+      },
+    });
+  }
+  
+  /// Send generic message
+  void sendMessage(Map<String, dynamic> message) {
+    if (!_isConnected) return;
+    _sendMessage(message);
+  }
+  
   /// Send acknowledgment for emergency alert
   void sendEmergencyAcknowledgment(int alertId) {
     if (!_isConnected) return;

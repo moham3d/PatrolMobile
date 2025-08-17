@@ -201,13 +201,13 @@ dependencies:
     - [x] Implement connectivity monitoring
     - [x] **Deliverables:** Offline capability, data sync, conflict resolution
 
-- [ ] **Day 4-5: Real-Time Features & Communication**
-    - [ ] Implement WebSocket connection for live updates
-    - [ ] Create real-time patrol status sharing
-    - [ ] Build push notifications with firebase_messaging
-    - [ ] Implement location sharing during active patrols
-    - [ ] Create basic in-app messaging for emergencies
-    - [ ] **Deliverables:** Real-time updates, notifications, basic communication
+- [x] **Day 4-5: Real-Time Features & Communication**
+    - [x] Implement WebSocket connection for live updates
+    - [x] Create real-time patrol status sharing
+    - [x] Build push notifications with firebase_messaging
+    - [x] Implement location sharing during active patrols
+    - [x] Create basic in-app messaging for emergencies
+    - [x] **Deliverables:** Real-time updates, notifications, basic communication
 
 ### Phase 3: Enhanced Features & Polish (Week 5-6)
 

@@ -114,6 +114,42 @@ class DatabaseService {
       )
     ''');
 
+    // Offline location data table for real-time tracking
+    await db.execute('''
+      CREATE TABLE offline_locations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        accuracy REAL NOT NULL,
+        timestamp TEXT NOT NULL,
+        address TEXT,
+        speed REAL,
+        heading REAL,
+        is_patrol INTEGER DEFAULT 0,
+        synced INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Emergency messages table for offline storage
+    await db.execute('''
+      CREATE TABLE emergency_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        sender_id INTEGER NOT NULL,
+        sender_name TEXT NOT NULL,
+        recipient_ids TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        is_urgent INTEGER DEFAULT 0,
+        metadata TEXT,
+        read_status INTEGER DEFAULT 0,
+        synced INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
     // Sync log table
     await db.execute('''
       CREATE TABLE sync_log (
@@ -133,6 +169,10 @@ class DatabaseService {
     await db.execute('CREATE INDEX idx_patrol_actions_sync ON offline_patrol_actions(sync_status)');
     await db.execute('CREATE INDEX idx_checkpoint_code ON cached_checkpoints(code)');
     await db.execute('CREATE INDEX idx_patrol_assigned ON cached_patrols(assigned_to)');
+    await db.execute('CREATE INDEX idx_locations_user ON offline_locations(user_id)');
+    await db.execute('CREATE INDEX idx_locations_timestamp ON offline_locations(timestamp)');
+    await db.execute('CREATE INDEX idx_messages_sender ON emergency_messages(sender_id)');
+    await db.execute('CREATE INDEX idx_messages_timestamp ON emergency_messages(timestamp)');
   }
 
   /// Handle database upgrades
