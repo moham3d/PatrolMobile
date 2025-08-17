@@ -291,6 +291,15 @@ class DashboardBody extends ConsumerWidget {
       enabled: true,
     ));
     
+    // All roles can view incidents
+    actions.add(QuickAction(
+      icon: Icons.assignment,
+      title: 'View Incidents',
+      subtitle: 'Manage & Track',
+      onTap: () => context.go(AppConstants.incidentListRoute),
+      enabled: true,
+    ));
+    
     // Supervisors and above can manage guards
     if (user.isSupervisor || user.isSiteManager || user.isAdmin) {
       actions.add(QuickAction(
