@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_constants.dart';
 import '../models/emergency.dart';
 import '../exceptions/api_exception.dart';
 import 'api_service.dart';
+import 'emergency_escalation_service.dart';
 
 /// Emergency service for handling SOS alerts and panic buttons
 class EmergencyService {
@@ -61,7 +63,12 @@ class EmergencyService {
         );
       }
 
-      return EmergencyAlertResponse.fromJson(response.data!);
+      final alertResponse = EmergencyAlertResponse.fromJson(response.data!);
+      
+      // Start automatic escalation timer
+      EmergencyEscalationService.instance.startEscalation(alertResponse.alert);
+      
+      return alertResponse;
     } on DioException catch (e) {
       throw EmergencyException(
         message: ApiException.fromDioError(e).message,
@@ -159,6 +166,9 @@ class EmergencyService {
       await ApiService.instance.post<Map<String, dynamic>>(
         '${AppConstants.mobileApiBase}/emergency/alerts/$alertId/acknowledge',
       );
+      
+      // Cancel escalation if alert is acknowledged
+      EmergencyEscalationService.instance.cancelEscalation(alertId);
     } on DioException catch (e) {
       throw EmergencyException(
         message: ApiException.fromDioError(e).message,
@@ -178,6 +188,9 @@ class EmergencyService {
         '${AppConstants.mobileApiBase}/emergency/alerts/$alertId/resolve',
         data: data.isNotEmpty ? data : null,
       );
+      
+      // Cancel escalation if alert is resolved
+      EmergencyEscalationService.instance.cancelEscalation(alertId);
     } on DioException catch (e) {
       throw EmergencyException(
         message: ApiException.fromDioError(e).message,
@@ -199,6 +212,9 @@ class EmergencyService {
         '${AppConstants.mobileApiBase}/emergency/alerts/$alertId',
         data: data,
       );
+      
+      // Cancel escalation if alert is cancelled
+      EmergencyEscalationService.instance.cancelEscalation(alertId);
     } on DioException catch (e) {
       throw EmergencyException(
         message: ApiException.fromDioError(e).message,
@@ -322,5 +338,118 @@ class EmergencyService {
   /// Get distance between two points (useful for location tracking)
   double getDistance(double lat1, double lon1, double lat2, double lon2) {
     return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+  }
+
+  /// Get emergency contacts
+  Future<List<EmergencyContact>> getEmergencyContacts() async {
+    try {
+      final response = await ApiService.instance.get<List<dynamic>>(
+        '${AppConstants.mobileApiBase}/emergency/contacts',
+      );
+
+      if (response.data == null) {
+        // Return default emergency contacts if API fails
+        return _getDefaultEmergencyContacts();
+      }
+
+      return response.data!
+          .map((json) => EmergencyContact.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      // Return default emergency contacts if API fails
+      return _getDefaultEmergencyContacts();
+    }
+  }
+
+  /// Get default emergency contacts (fallback)
+  List<EmergencyContact> _getDefaultEmergencyContacts() {
+    return [
+      const EmergencyContact(
+        id: 1,
+        name: 'Emergency Services',
+        phone: '911',
+        type: 'emergency',
+        description: 'Emergency services (911)',
+        isActive: true,
+      ),
+      const EmergencyContact(
+        id: 2,
+        name: 'Site Security',
+        phone: '+1-555-0101',
+        type: 'security',
+        description: 'Site security office',
+        isActive: true,
+      ),
+      const EmergencyContact(
+        id: 3,
+        name: 'Site Manager',
+        phone: '+1-555-0102',
+        type: 'management',
+        description: 'Site manager',
+        isActive: true,
+      ),
+    ];
+  }
+
+  /// Call emergency contact
+  Future<bool> callEmergencyContact(EmergencyContact contact) async {
+    try {
+      final Uri phoneUri = Uri(scheme: 'tel', path: contact.phone);
+      
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(
+          phoneUri,
+          mode: LaunchMode.externalApplication,
+        );
+        return true;
+      } else {
+        throw EmergencyException(
+          message: 'Cannot make phone calls on this device',
+          code: 'PHONE_NOT_SUPPORTED',
+        );
+      }
+    } catch (e) {
+      throw EmergencyException(
+        message: 'Failed to call emergency contact: $e',
+        code: 'CALL_FAILED',
+      );
+    }
+  }
+
+  /// Call emergency services (911)
+  Future<bool> callEmergencyServices() async {
+    const emergencyContact = EmergencyContact(
+      id: 0,
+      name: 'Emergency Services',
+      phone: '911',
+      type: 'emergency',
+      description: 'Emergency services',
+      isActive: true,
+    );
+    
+    return await callEmergencyContact(emergencyContact);
+  }
+
+  /// Trigger immediate emergency call with optional alert
+  Future<void> triggerEmergencyCall({
+    bool createAlert = true,
+    String? description,
+  }) async {
+    try {
+      // First, call emergency services
+      await callEmergencyServices();
+      
+      // Then create emergency alert if requested
+      if (createAlert) {
+        await triggerSOS(
+          description: description ?? 'Emergency call initiated - Immediate assistance required',
+        );
+      }
+    } catch (e) {
+      throw EmergencyException(
+        message: 'Emergency call failed: $e',
+        code: 'EMERGENCY_CALL_FAILED',
+      );
+    }
   }
 }

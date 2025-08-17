@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/emergency_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/emergency_service.dart';
+import 'emergency_contacts_screen.dart';
+import 'emergency_history_screen.dart';
 
 /// Emergency SOS screen for triggering panic alerts
 class SOSScreen extends ConsumerStatefulWidget {
@@ -195,6 +198,51 @@ class _SOSScreenState extends ConsumerState<SOSScreen>
                           style: TextStyle(height: 1.5),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Quick access buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showEmergencyContacts(context),
+                        icon: const Icon(Icons.contacts),
+                        label: const Text('Contacts'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blue.shade600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _callEmergencyServices(context),
+                        icon: const Icon(Icons.phone),
+                        label: const Text('Call 911'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade600,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Additional actions
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showEmergencyHistory(context),
+                    icon: const Icon(Icons.history),
+                    label: const Text('Emergency History'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade600,
                     ),
                   ),
                 ),
@@ -443,5 +491,101 @@ class _SOSScreenState extends ConsumerState<SOSScreen>
         ),
       ],
     );
+  }
+
+  /// Show emergency contacts screen
+  void _showEmergencyContacts(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EmergencyContactsScreen(),
+      ),
+    );
+  }
+
+  /// Show emergency history screen
+  void _showEmergencyHistory(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EmergencyHistoryScreen(),
+      ),
+    );
+  }
+
+  /// Call emergency services directly
+  void _callEmergencyServices(BuildContext context) async {
+    try {
+      final shouldCall = await _showEmergencyCallDialog();
+      if (!shouldCall) return;
+
+      await EmergencyService.instance.triggerEmergencyCall(
+        createAlert: true,
+        description: 'Emergency call initiated from SOS screen',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Calling Emergency Services and creating alert...'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Emergency call failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Show emergency call confirmation dialog
+  Future<bool> _showEmergencyCallDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.emergency,
+              color: Colors.red.shade600,
+            ),
+            const SizedBox(width: 8),
+            const Text('Emergency Call'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'This will call Emergency Services (911) and create an emergency alert.',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Only use this for real emergencies.',
+              style: TextStyle(fontSize: 14, color: Colors.red),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Call 911'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 }
