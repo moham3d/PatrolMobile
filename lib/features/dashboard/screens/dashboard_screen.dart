@@ -284,6 +284,15 @@ class DashboardBody extends ConsumerWidget {
         },
         enabled: true,
       ));
+      
+      // Emergency response for supervisors+
+      actions.add(QuickAction(
+        icon: Icons.emergency_outlined,
+        title: 'Emergency Response',
+        subtitle: 'Manage Alerts',
+        onTap: () => context.go('/emergency-response'),
+        enabled: true,
+      ));
     }
     
     // Site managers and above can access analytics
