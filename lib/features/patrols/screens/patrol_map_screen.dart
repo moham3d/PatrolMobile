@@ -201,7 +201,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             center: _currentLocation != null
                 ? LatLng(_currentLocation!.latitude, _currentLocation!.longitude)
                 : const LatLng(37.7749, -122.4194), // Default to San Francisco
-            zoom: 13.0,
+            initialZoom: 13.0,
             minZoom: 5.0,
             maxZoom: 18.0,
           ),
@@ -221,14 +221,14 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                 markers: [
                   Marker(
                     point: LatLng(_currentLocation!.latitude, _currentLocation!.longitude),
-                    builder: (ctx) => Container(
+                    child: Container(
                       decoration: BoxDecoration(
                         color: Colors.blue,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           ),
@@ -330,7 +330,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             final checkpoint = entry.value;
             return Marker(
               point: LatLng(checkpoint.latitude!, checkpoint.longitude!),
-              builder: (ctx) => _buildCheckpointMarker(checkpoint, index + 1, patrol.status),
+              child: _buildCheckpointMarker(checkpoint, index + 1, patrol.status),
             );
           }).toList(),
         ),
@@ -364,7 +364,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             return Polyline(
               points: routePoints,
               strokeWidth: 3.0,
-              color: _getPatrolRouteColor(patrol.status).withOpacity(0.7),
+              color: _getPatrolRouteColor(patrol.status).withValues(alpha: 0.7),
               isDotted: patrol.status == 'completed',
             );
           }).toList(),
@@ -382,7 +382,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               final checkpoint = entry.value;
               return Marker(
                 point: LatLng(checkpoint.latitude!, checkpoint.longitude!),
-                builder: (ctx) => _buildCheckpointMarker(
+                child: _buildCheckpointMarker(
                   checkpoint, 
                   index + 1, 
                   patrol.status,
@@ -416,7 +416,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -502,7 +502,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -560,7 +560,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -582,7 +582,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getPatrolRouteColor(patrol.status).withOpacity(0.2),
+                          color: _getPatrolRouteColor(patrol.status).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

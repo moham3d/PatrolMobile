@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../models/sync_models.dart';
 import 'performance_monitoring_service.dart';
 import 'sync_service.dart';
 
@@ -356,51 +357,4 @@ class BackgroundSyncOptimizationService {
     _syncTimer = null;
     _pendingSyncOperations.clear();
   }
-}
-
-/// Sync operation model
-class SyncOperation {
-  final String id;
-  final String type;
-  final Map<String, dynamic> data;
-  final SyncPriority priority;
-  final int maxRetries;
-  int retryCount;
-  final DateTime createdAt;
-
-  SyncOperation({
-    required this.id,
-    required this.type,
-    required this.data,
-    this.priority = SyncPriority.normal,
-    this.maxRetries = 3,
-    this.retryCount = 0,
-    DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
-}
-
-/// Sync priority levels
-enum SyncPriority {
-  low(1),
-  normal(2),
-  high(3),
-  critical(4);
-
-  const SyncPriority(this.value);
-  final int value;
-}
-
-/// Sync result model
-class SyncResult {
-  final SyncOperation operation;
-  final bool success;
-  final String? error;
-  final Map<String, dynamic>? response;
-
-  SyncResult({
-    required this.operation,
-    required this.success,
-    this.error,
-    this.response,
-  });
 }

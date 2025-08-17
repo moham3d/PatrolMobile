@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/patrol_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/patrol_simple.dart';
+import '../../../core/models/patrol_history.dart';
 import '../../../core/widgets/role_based_widget.dart';
 import '../widgets/patrol_card.dart';
 import '../widgets/patrol_progress_indicator.dart';
