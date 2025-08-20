@@ -81,7 +81,7 @@ void main() {
       // Store a patrol action
       final actionId = await databaseService.storeOfflinePatrolAction(
         patrolId: 5,
-        action: 'start',
+        actionType: 'start',
         userId: 789,
         latitude: 34.0522,
         longitude: -118.2437,
@@ -254,7 +254,7 @@ void main() {
         futures.add(
           databaseService.storeOfflinePatrolAction(
             patrolId: 400 + i,
-            action: 'checkpoint_visit',
+            actionType: 'checkpoint_visit',
             userId: 400 + i,
             latitude: 37.7749,
             longitude: -122.4194,
