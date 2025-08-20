@@ -4,7 +4,7 @@ version: 1.0.0+1
 publish_to: 'none'
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,7 +15,7 @@ dependencies:
   
   # State Management & Navigation  
   flutter_riverpod: ^2.4.6
-  go_router: ^12.1.1
+  go_router: ^16.2.0
   
   # Security & Storage
   flutter_secure_storage: ^9.0.0
@@ -23,37 +23,37 @@ dependencies:
   crypto: ^3.0.3
   
   # Location & GPS
-  geolocator: ^10.1.0
-  permission_handler: ^11.0.1
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
   
   # Emergency & Communication
-  web_socket_channel: ^2.4.0
-  flutter_local_notifications: ^16.1.0
-  firebase_messaging: ^14.7.3
+  web_socket_channel: ^3.0.3
+  flutter_local_notifications: ^19.4.0
+  firebase_messaging: ^16.0.0
   
   # Scanning & NFC
   qr_code_scanner: ^1.0.1
-  nfc_manager: ^3.3.0
+  nfc_manager: ^4.0.2
   
   # Media & Camera
-  camera: ^0.10.5+5
+  camera: ^0.11.2
   image_picker: ^1.0.4
   
   # Offline Storage & Sync
   sqflite: ^2.3.0
   hive: ^2.2.3
-  connectivity_plus: ^5.0.1
-  workmanager: ^0.5.2
+  connectivity_plus: ^6.1.5
+  workmanager: ^0.9.0+2
   
   # UI & UX
-  flutter_map: ^6.1.0
+  flutter_map: ^8.2.1
   latlong2: ^0.9.1
   cached_network_image: ^3.3.0
-  lottie: ^2.7.0
+  lottie: ^3.3.1
 
   # Utilities
   uuid: ^4.1.0
-  intl: ^0.18.1
+  intl: ^0.20.2
   json_annotation: ^4.9.0
   url_launcher: ^6.2.1
   path: ^1.8.3
@@ -61,7 +61,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
   build_runner: ^2.4.7
   json_serializable: ^6.7.1
 
