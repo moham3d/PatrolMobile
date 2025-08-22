@@ -117,3 +117,9 @@ Based on `docs/access_matrix.csv`:
 ## License
 
 This project is proprietary software for PatrolShield Security Management System.
+
+To build the release APK, run:
+gradlew assembleRelease
+
+To build the debug APK, run:
+gradlew assembleDebug

@@ -1,7 +1,6 @@
-import 'dart:async';
-import 'dart:io';
+// ...existing code...
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 /// QR Code scanner widget
 class QRScannerWidget extends StatefulWidget {
@@ -12,20 +11,9 @@ class QRScannerWidget extends StatefulWidget {
 }
 
 class _QRScannerWidgetState extends State<QRScannerWidget> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
+  MobileScannerController controller = MobileScannerController();
   String? scannedCode;
-  bool hasFlash = false;
   bool isFlashOn = false;
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      controller?.pauseCamera();
-    }
-    controller?.resumeCamera();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +23,10 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: [
-          if (hasFlash)
-            IconButton(
-              icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off),
-              onPressed: _toggleFlash,
-            ),
+          IconButton(
+            icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off),
+            onPressed: _toggleFlash,
+          ),
           IconButton(
             icon: const Icon(Icons.flip_camera_android),
             onPressed: _flipCamera,
@@ -49,18 +36,25 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
       body: Stack(
         children: [
           // QR Scanner View
-          QRView(
-            key: qrKey,
-            onQRViewCreated: _onQRViewCreated,
-            overlay: QrScannerOverlayShape(
-              borderColor: Theme.of(context).primaryColor,
-              borderRadius: 10,
-              borderLength: 30,
-              borderWidth: 10,
-              cutOutSize: 300,
-            ),
+          MobileScanner(
+            controller: controller,
+            fit: BoxFit.cover,
+            onDetect: (capture) {
+              final List<Barcode> barcodes = capture.barcodes;
+              for (final barcode in barcodes) {
+                if (barcode.rawValue != null &&
+                    barcode.rawValue!.isNotEmpty &&
+                    scannedCode == null) {
+                  setState(() {
+                    scannedCode = barcode.rawValue;
+                  });
+                  _provideFeedback();
+                  Navigator.of(context).pop(barcode.rawValue);
+                  break;
+                }
+              }
+            },
           ),
-          
           // Instructions overlay
           Positioned(
             bottom: 100,
@@ -76,11 +70,7 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.qr_code_scanner,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+                  Icon(Icons.qr_code_scanner, color: Colors.white, size: 32),
                   SizedBox(height: 8),
                   Text(
                     'Position the QR code within the frame',
@@ -94,17 +84,13 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
                   SizedBox(height: 4),
                   Text(
                     'The scan will happen automatically',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
           ),
-          
           // Cancel button
           Positioned(
             bottom: 20,
@@ -116,7 +102,10 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                 ),
                 child: const Text('Cancel'),
               ),
@@ -127,52 +116,15 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
-    
-    controller.scannedDataStream.listen((scanData) {
-      if (scanData.code != null && scanData.code!.isNotEmpty && scannedCode == null) {
-        setState(() {
-          scannedCode = scanData.code;
-        });
-        
-        // Vibrate/haptic feedback
-        _provideFeedback();
-        
-        // Return the scanned code
-        Navigator.of(context).pop(scanData.code);
-      }
-    });
-    
-    // Check if flash is available
-    controller.getFlashStatus().then((value) {
-      setState(() {
-        hasFlash = true;
-        isFlashOn = value ?? false;
-      });
-    }).catchError((error) {
-      setState(() {
-        hasFlash = false;
-      });
-    });
-  }
-
   void _toggleFlash() async {
-    if (controller != null) {
-      await controller!.toggleFlash();
-      final flashStatus = await controller!.getFlashStatus();
-      setState(() {
-        isFlashOn = flashStatus ?? false;
-      });
-    }
+    await controller.toggleTorch();
+    setState(() {
+      isFlashOn = !isFlashOn;
+    });
   }
 
   void _flipCamera() async {
-    if (controller != null) {
-      await controller!.flipCamera();
-    }
+    await controller.switchCamera();
   }
 
   void _provideFeedback() {
@@ -182,7 +134,7 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
 
   @override
   void dispose() {
-    controller?.dispose();
+    controller.dispose();
     super.dispose();
   }
 }

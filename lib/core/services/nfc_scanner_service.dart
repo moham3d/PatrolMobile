@@ -2,13 +2,15 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+// ...existing code...
 
 /// NFC Tag scanning service
 class NFCScannerService {
   static final NFCScannerService instance = NFCScannerService._internal();
   NFCScannerService._internal();
 
-  final StreamController<String> _resultController = StreamController<String>.broadcast();
+  final StreamController<String> _resultController =
+      StreamController<String>.broadcast();
   bool _isScanning = false;
   bool _isAvailable = false;
 
@@ -53,10 +55,6 @@ class NFCScannerService {
             _resultController.add(result);
           }
         },
-        onError: (NfcError error) {
-          debugPrint('NFC Error: ${error.message}');
-          _resultController.addError(error.message ?? 'NFC scanning error');
-        },
       );
 
       // Set timeout if specified
@@ -90,56 +88,49 @@ class NFCScannerService {
   /// Process discovered NFC tag
   Future<String?> _processNFCTag(NfcTag tag) async {
     try {
-      // Try different tag types
+      final tagMap = tag.data as Map<String, dynamic>;
       String? tagData;
-
       // NDEF (NFC Data Exchange Format)
-      final ndef = Ndef.from(tag);
-      if (ndef != null) {
-        final ndefMessage = await ndef.read();
-        if (ndefMessage.records.isNotEmpty) {
-          tagData = _extractTextFromNdefRecord(ndefMessage.records.first);
+      if (tagMap.containsKey('ndef')) {
+        final ndef = tagMap['ndef'] as Map<String, dynamic>?;
+        final cachedMessage = ndef?['cachedMessage'] as Map<String, dynamic>?;
+        final records = cachedMessage?['records'] as List<dynamic>?;
+        if (records != null && records.isNotEmpty) {
+          tagData = _extractTextFromNdefRecordMap(records.first);
         }
       }
-
       // If no NDEF, try NfcA (ISO 14443 Type A)
-      if (tagData == null) {
-        final nfcA = NfcA.from(tag);
-        if (nfcA != null) {
-          // Get the identifier
-          tagData = _bytesToHex(nfcA.identifier);
+      if (tagData == null && tagMap.containsKey('nfca')) {
+        final identifier = tagMap['nfca']?['identifier'];
+        if (identifier is Uint8List) {
+          tagData = _bytesToHex(identifier);
         }
       }
-
       // If still no data, try NfcB (ISO 14443 Type B)
-      if (tagData == null) {
-        final nfcB = NfcB.from(tag);
-        if (nfcB != null) {
-          tagData = _bytesToHex(nfcB.identifier);
+      if (tagData == null && tagMap.containsKey('nfcb')) {
+        final identifier = tagMap['nfcb']?['identifier'];
+        if (identifier is Uint8List) {
+          tagData = _bytesToHex(identifier);
         }
       }
-
       // If still no data, try NfcF (JIS 6319-4)
-      if (tagData == null) {
-        final nfcF = NfcF.from(tag);
-        if (nfcF != null) {
-          tagData = _bytesToHex(nfcF.identifier);
+      if (tagData == null && tagMap.containsKey('nfcf')) {
+        final identifier = tagMap['nfcf']?['identifier'];
+        if (identifier is Uint8List) {
+          tagData = _bytesToHex(identifier);
         }
       }
-
       // If still no data, try NfcV (ISO 15693)
-      if (tagData == null) {
-        final nfcV = NfcV.from(tag);
-        if (nfcV != null) {
-          tagData = _bytesToHex(nfcV.identifier);
+      if (tagData == null && tagMap.containsKey('nfcv')) {
+        final identifier = tagMap['nfcv']?['identifier'];
+        if (identifier is Uint8List) {
+          tagData = _bytesToHex(identifier);
         }
       }
-
       if (tagData != null && tagData.isNotEmpty) {
         debugPrint('NFC Tag detected: $tagData');
         return tagData;
       }
-
       return null;
     } catch (e) {
       debugPrint('Error processing NFC tag: $e');
@@ -148,36 +139,35 @@ class NFCScannerService {
   }
 
   /// Extract text from NDEF record
-  String? _extractTextFromNdefRecord(NdefRecord record) {
+  String? _extractTextFromNdefRecordMap(dynamic record) {
     try {
-      // Check if it's a text record
-      if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown && 
-          record.type.isNotEmpty) {
-        
-        final payload = record.payload;
-        if (payload.isNotEmpty) {
-          // First byte contains encoding and language code length
-          final isUtf16 = (payload[0] & 0x80) != 0;
+      // record is a Map<String, dynamic> in nfc_manager v4.x
+      if (record is Map<String, dynamic>) {
+        final typeNameFormat = record['typeNameFormat'];
+        final type = record['type'];
+        final payload = record['payload'];
+        if (typeNameFormat == 1 &&
+            type is Uint8List &&
+            type.isNotEmpty &&
+            payload is Uint8List &&
+            payload.isNotEmpty) {
+          // 1 == nfcWellknown
           final langCodeLength = payload[0] & 0x3F;
-          
-          // Skip language code and encoding byte
           final textBytes = payload.sublist(1 + langCodeLength);
-          
-          if (isUtf16) {
-            // UTF-16 encoding
-            return String.fromCharCodes(textBytes);
-          } else {
-            // UTF-8 encoding
-            return String.fromCharCodes(textBytes);
-          }
+          return String.fromCharCodes(textBytes);
+        }
+        // If not a text record, return hex representation
+        if (payload is Uint8List) {
+          return _bytesToHex(payload);
         }
       }
-      
-      // If not a text record, return hex representation
-      return _bytesToHex(record.payload);
+      return null;
     } catch (e) {
       debugPrint('Error extracting text from NDEF record: $e');
-      return _bytesToHex(record.payload);
+      if (record is Map<String, dynamic> && record['payload'] is Uint8List) {
+        return _bytesToHex(record['payload']);
+      }
+      return null;
     }
   }
 
@@ -189,7 +179,7 @@ class NFCScannerService {
   /// Validate NFC tag format
   bool isValidCheckpointNFC(String nfcData) {
     if (nfcData.isEmpty) return false;
-    
+
     // Check for common checkpoint NFC patterns
     final patterns = [
       RegExp(r'^NFC_\w+$'), // NFC_001, NFC_MAIN, etc.
@@ -213,7 +203,7 @@ class NFCScannerService {
     // Add additional metadata
     result['length'] = nfcData.length;
     result['isHex'] = RegExp(r'^[A-F0-9]+$').hasMatch(nfcData.toUpperCase());
-    
+
     return result;
   }
 
@@ -224,12 +214,7 @@ class NFCScannerService {
 }
 
 /// NFC scanning state
-enum NFCScanState {
-  idle,
-  scanning,
-  tagDetected,
-  error,
-}
+enum NFCScanState { idle, scanning, tagDetected, error }
 
 /// NFC scan result
 class NFCScanResult {

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:io';
+// ...existing code...
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+// ...existing code...
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// QR Code scanning service
@@ -10,9 +10,10 @@ class QRScannerService {
   static final QRScannerService instance = QRScannerService._internal();
   QRScannerService._internal();
 
-  QRViewController? _controller;
-  StreamSubscription<Barcode>? _scanSubscription;
-  final StreamController<String> _resultController = StreamController<String>.broadcast();
+  MobileScannerController? _controller;
+  StreamSubscription<BarcodeCapture>? _scanSubscription;
+  final StreamController<String> _resultController =
+      StreamController<String>.broadcast();
 
   /// Stream of scanned QR codes
   Stream<String> get scanResults => _resultController.stream;
@@ -29,26 +30,22 @@ class QRScannerService {
   }
 
   /// Initialize QR scanner
-  Future<void> initialize(QRViewController controller) async {
+  Future<void> initialize(MobileScannerController controller) async {
     _controller = controller;
-    
     // Listen to scan results
-    _scanSubscription = _controller!.scannedDataStream.listen((scanData) {
-      if (scanData.code != null && scanData.code!.isNotEmpty) {
-        _resultController.add(scanData.code!);
+    _scanSubscription = _controller!.barcodes.listen((BarcodeCapture capture) {
+      for (final barcode in capture.barcodes) {
+        if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
+          _resultController.add(barcode.rawValue!);
+        }
       }
     });
-
-    // Resume camera on Android
-    if (Platform.isAndroid) {
-      await _controller!.resumeCamera();
-    }
   }
 
   /// Start scanning
   Future<void> startScanning() async {
     try {
-      await _controller?.resumeCamera();
+      await _controller?.start();
     } catch (e) {
       debugPrint('Error starting QR scanner: $e');
       rethrow;
@@ -58,7 +55,7 @@ class QRScannerService {
   /// Stop scanning
   Future<void> stopScanning() async {
     try {
-      await _controller?.pauseCamera();
+      await _controller?.stop();
     } catch (e) {
       debugPrint('Error stopping QR scanner: $e');
     }
@@ -67,7 +64,7 @@ class QRScannerService {
   /// Toggle flash
   Future<void> toggleFlash() async {
     try {
-      await _controller?.toggleFlash();
+      await _controller?.toggleTorch();
     } catch (e) {
       debugPrint('Error toggling flash: $e');
     }
@@ -76,20 +73,17 @@ class QRScannerService {
   /// Flip camera
   Future<void> flipCamera() async {
     try {
-      await _controller?.flipCamera();
+      await _controller?.switchCamera();
     } catch (e) {
       debugPrint('Error flipping camera: $e');
     }
   }
 
   /// Get flash status
+  /// Torch state should be tracked via MobileScannerController.torchState stream in the UI.
   Future<bool?> getFlashStatus() async {
-    try {
-      return await _controller?.getFlashStatus();
-    } catch (e) {
-      debugPrint('Error getting flash status: $e');
-      return false;
-    }
+    // Not supported directly in mobile_scanner; track via stream in UI.
+    return null;
   }
 
   /// Dispose scanner
@@ -103,7 +97,7 @@ class QRScannerService {
   bool isValidCheckpointQR(String qrCode) {
     // Basic validation - you can customize this based on your QR code format
     if (qrCode.isEmpty) return false;
-    
+
     // Check for common checkpoint QR patterns
     final patterns = [
       RegExp(r'^CP_\w+$'), // CP_001, CP_MAIN, etc.
