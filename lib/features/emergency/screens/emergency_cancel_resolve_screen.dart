@@ -9,20 +9,19 @@ import '../../../core/widgets/role_based_widget.dart';
 class EmergencyCancelResolveScreen extends ConsumerStatefulWidget {
   final EmergencyAlert alert;
 
-  const EmergencyCancelResolveScreen({
-    super.key,
-    required this.alert,
-  });
+  const EmergencyCancelResolveScreen({super.key, required this.alert});
 
   @override
-  ConsumerState<EmergencyCancelResolveScreen> createState() => _EmergencyCancelResolveScreenState();
+  ConsumerState<EmergencyCancelResolveScreen> createState() =>
+      _EmergencyCancelResolveScreenState();
 }
 
-class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelResolveScreen> {
+class _EmergencyCancelResolveScreenState
+    extends ConsumerState<EmergencyCancelResolveScreen> {
   final _formKey = GlobalKey<FormState>();
   final _notesController = TextEditingController();
   final _followUpController = TextEditingController();
-  
+
   String _selectedAction = 'resolve';
   String _resolutionType = 'resolved';
   final List<String> _followUpActions = [];
@@ -56,31 +55,31 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
             children: [
               // Alert summary card
               _buildAlertSummaryCard(),
-              
+
               const SizedBox(height: 24),
-              
+
               // Action selection
               _buildActionSelection(),
-              
+
               const SizedBox(height: 24),
-              
+
               // Resolution type selection (only if resolving)
               if (_selectedAction == 'resolve') ...[
                 _buildResolutionTypeSelection(),
                 const SizedBox(height: 24),
               ],
-              
+
               // Notes section
               _buildNotesSection(),
-              
+
               const SizedBox(height: 24),
-              
+
               // Follow-up actions (only if resolving)
               if (_selectedAction == 'resolve') ...[
                 _buildFollowUpActionsSection(),
                 const SizedBox(height: 24),
               ],
-              
+
               // Action buttons
               _buildActionButtons(),
             ],
@@ -92,7 +91,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
 
   Widget _buildAlertSummaryCard() {
     final severityColor = widget.alert.severityColor;
-    
+
     return Card(
       elevation: 4,
       child: Padding(
@@ -103,7 +102,10 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: severityColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -119,7 +121,10 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade100,
                     borderRadius: BorderRadius.circular(12),
@@ -136,33 +141,33 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
                 const Spacer(),
                 Text(
                   _formatTimestamp(widget.alert.triggeredAt),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             Text(
-              widget.alert.description,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              widget.alert.description ?? 'No description',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             Row(
               children: [
                 const Icon(Icons.person, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text(
                   widget.alert.userName ?? 'User #${widget.alert.userId}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
                 ),
                 if (widget.alert.locationName != null) ...[
                   const SizedBox(width: 16),
@@ -192,12 +197,12 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
       children: [
         Text(
           'Select Action',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        
+
         SupervisorOnlyWidget(
           child: RadioListTile<String>(
             value: 'resolve',
@@ -212,7 +217,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
             secondary: Icon(Icons.check_circle, color: Colors.green.shade600),
           ),
         ),
-        
+
         SupervisorOnlyWidget(
           child: RadioListTile<String>(
             value: 'cancel',
@@ -237,9 +242,9 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
       children: [
         Text(
           'Resolution Type',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
@@ -249,11 +254,23 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           items: const [
-            DropdownMenuItem(value: 'resolved', child: Text('Successfully Resolved')),
+            DropdownMenuItem(
+              value: 'resolved',
+              child: Text('Successfully Resolved'),
+            ),
             DropdownMenuItem(value: 'false_alarm', child: Text('False Alarm')),
-            DropdownMenuItem(value: 'duplicate', child: Text('Duplicate Alert')),
-            DropdownMenuItem(value: 'referred', child: Text('Referred to Others')),
-            DropdownMenuItem(value: 'escalated', child: Text('Escalated to Higher Authority')),
+            DropdownMenuItem(
+              value: 'duplicate',
+              child: Text('Duplicate Alert'),
+            ),
+            DropdownMenuItem(
+              value: 'referred',
+              child: Text('Referred to Others'),
+            ),
+            DropdownMenuItem(
+              value: 'escalated',
+              child: Text('Escalated to Higher Authority'),
+            ),
           ],
           onChanged: (value) {
             setState(() {
@@ -276,17 +293,19 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _selectedAction == 'resolve' ? 'Resolution Notes' : 'Cancellation Reason',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          _selectedAction == 'resolve'
+              ? 'Resolution Notes'
+              : 'Cancellation Reason',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _notesController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            hintText: _selectedAction == 'resolve' 
+            hintText: _selectedAction == 'resolve'
                 ? 'Describe how the emergency was resolved...'
                 : 'Explain why the alert is being cancelled...',
           ),
@@ -308,28 +327,30 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
       children: [
         Text(
           'Follow-up Actions (Optional)',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        
+
         // Existing follow-up actions
         if (_followUpActions.isNotEmpty) ...[
-          ..._followUpActions.map((action) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Chip(
-              label: Text(action),
-              onDeleted: () {
-                setState(() {
-                  _followUpActions.remove(action);
-                });
-              },
+          ..._followUpActions.map(
+            (action) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Chip(
+                label: Text(action),
+                onDeleted: () {
+                  setState(() {
+                    _followUpActions.remove(action);
+                  });
+                },
+              ),
             ),
-          )),
+          ),
           const SizedBox(height: 8),
         ],
-        
+
         // Add new follow-up action
         Row(
           children: [
@@ -338,8 +359,12 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
                 controller: _followUpController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText: 'e.g., File incident report, Schedule maintenance...',
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  hintText:
+                      'e.g., File incident report, Schedule maintenance...',
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
             ),
@@ -363,14 +388,21 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
           child: ElevatedButton(
             onPressed: _isProcessing ? null : _processAction,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _selectedAction == 'resolve' ? Colors.green : Colors.orange,
+              backgroundColor: _selectedAction == 'resolve'
+                  ? Colors.green
+                  : Colors.orange,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: _isProcessing
                 ? const CircularProgressIndicator(color: Colors.white)
                 : Text(
-                    _selectedAction == 'resolve' ? 'Resolve Alert' : 'Cancel Alert',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    _selectedAction == 'resolve'
+                        ? 'Resolve Alert'
+                        : 'Cancel Alert',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
           ),
         ),
@@ -408,15 +440,17 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
 
     try {
       final notifier = ref.read(emergencyAlertsProvider.notifier);
-      
+
       if (_selectedAction == 'resolve') {
         await notifier.resolveAlert(
           widget.alert.id,
           resolution: _notesController.text.trim(),
           resolutionType: _resolutionType,
-          followUpActions: _followUpActions.isNotEmpty ? _followUpActions : null,
+          followUpActions: _followUpActions.isNotEmpty
+              ? _followUpActions
+              : null,
         );
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -431,7 +465,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
           widget.alert.id,
           reason: _notesController.text.trim(),
         );
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -465,7 +499,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
       final dateTime = DateTime.parse(timestamp);
       final now = DateTime.now();
       final difference = now.difference(dateTime);
-      
+
       if (difference.inMinutes < 1) {
         return 'Just now';
       } else if (difference.inHours < 1) {

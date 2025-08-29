@@ -781,7 +781,11 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
           _buildDetailRow(context, 'Alert ID', '#${alert.id}'),
           _buildDetailRow(context, 'Status', alert.status.toUpperCase()),
           _buildDetailRow(context, 'Severity', alert.severity.toUpperCase()),
-          _buildDetailRow(context, 'Description', alert.description),
+          _buildDetailRow(
+            context,
+            'Description',
+            alert.description ?? 'No description',
+          ),
           _buildDetailRow(
             context,
             'User',

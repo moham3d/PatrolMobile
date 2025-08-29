@@ -13,11 +13,8 @@ import '../widgets/checkpoint_status_indicator.dart';
 /// Screen displaying patrol routes on an interactive map with checkpoint tracking
 class PatrolMapScreen extends ConsumerStatefulWidget {
   final int? patrolId;
-  
-  const PatrolMapScreen({
-    super.key,
-    this.patrolId,
-  });
+
+  const PatrolMapScreen({super.key, this.patrolId});
 
   @override
   ConsumerState<PatrolMapScreen> createState() => _PatrolMapScreenState();
@@ -42,7 +39,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
     if (authState is! Authenticated) return;
 
     final user = authState.user;
-    
+
     if (widget.patrolId != null) {
       // Load specific patrol
       ref.read(patrolDetailProvider(widget.patrolId!).notifier).loadPatrol();
@@ -82,10 +79,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
       });
 
       // Center map on current location
-      _mapController.move(
-        LatLng(position.latitude, position.longitude),
-        15.0,
-      );
+      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
     } catch (e) {
       // Handle location error silently
     }
@@ -113,11 +107,11 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
         setState(() {
           _currentLocation = position;
         });
-        
+
         // Smoothly move map to follow user
         _mapController.move(
           LatLng(position.latitude, position.longitude),
-          _mapController.zoom,
+          _mapController.camera.zoom,
         );
       }
     });
@@ -130,7 +124,9 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
         title: Text(widget.patrolId != null ? 'Patrol Route' : 'Patrol Map'),
         actions: [
           IconButton(
-            icon: Icon(_isTrackingLocation ? Icons.gps_fixed : Icons.gps_not_fixed),
+            icon: Icon(
+              _isTrackingLocation ? Icons.gps_fixed : Icons.gps_not_fixed,
+            ),
             onPressed: _toggleLocationTracking,
           ),
           RoleBasedWidget(
@@ -156,10 +152,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                   value: 'completed',
                   child: Text('Completed Patrols'),
                 ),
-                const PopupMenuItem(
-                  value: 'all',
-                  child: Text('All Patrols'),
-                ),
+                const PopupMenuItem(value: 'all', child: Text('All Patrols')),
               ],
             ),
           ),
@@ -175,7 +168,10 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               mini: true,
               onPressed: () {
                 _mapController.move(
-                  LatLng(_currentLocation!.latitude, _currentLocation!.longitude),
+                  LatLng(
+                    _currentLocation!.latitude,
+                    _currentLocation!.longitude,
+                  ),
                   15.0,
                 );
               },
@@ -198,8 +194,11 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
-            center: _currentLocation != null
-                ? LatLng(_currentLocation!.latitude, _currentLocation!.longitude)
+            initialCenter: _currentLocation != null
+                ? LatLng(
+                    _currentLocation!.latitude,
+                    _currentLocation!.longitude,
+                  )
                 : const LatLng(37.7749, -122.4194), // Default to San Francisco
             initialZoom: 13.0,
             minZoom: 5.0,
@@ -211,16 +210,19 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.patrolshield.mobile',
             ),
-            
+
             // Patrol routes and checkpoints
             ..._buildPatrolLayers(),
-            
+
             // Current location marker
             if (_currentLocation != null)
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: LatLng(_currentLocation!.latitude, _currentLocation!.longitude),
+                    point: LatLng(
+                      _currentLocation!.latitude,
+                      _currentLocation!.longitude,
+                    ),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.blue,
@@ -245,7 +247,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               ),
           ],
         ),
-        
+
         // Patrol information overlay
         _buildPatrolInfoOverlay(),
       ],
@@ -264,8 +266,10 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
     return [
       Consumer(
         builder: (context, ref, child) {
-          final patrolDetailState = ref.watch(patrolDetailProvider(widget.patrolId!));
-          
+          final patrolDetailState = ref.watch(
+            patrolDetailProvider(widget.patrolId!),
+          );
+
           return switch (patrolDetailState) {
             PatrolDetailLoaded(:final patrol) => _buildPatrolRouteLayer(patrol),
             _ => const SizedBox.shrink(),
@@ -280,9 +284,11 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
       Consumer(
         builder: (context, ref, child) {
           final patrolListState = ref.watch(patrolListProvider);
-          
+
           return switch (patrolListState) {
-            PatrolListLoaded(:final patrols) => _buildMultiplePatrolRoutes(patrols),
+            PatrolListLoaded(:final patrols) => _buildMultiplePatrolRoutes(
+              patrols,
+            ),
             _ => const SizedBox.shrink(),
           };
         },
@@ -318,11 +324,10 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               points: routePoints,
               strokeWidth: 4.0,
               color: _getPatrolRouteColor(patrol.status),
-              isDotted: patrol.status == 'completed',
             ),
           ],
         ),
-        
+
         // Checkpoint markers
         MarkerLayer(
           markers: validCheckpoints.asMap().entries.map((entry) {
@@ -330,7 +335,11 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             final checkpoint = entry.value;
             return Marker(
               point: LatLng(checkpoint.latitude!, checkpoint.longitude!),
-              child: _buildCheckpointMarker(checkpoint, index + 1, patrol.status),
+              child: _buildCheckpointMarker(
+                checkpoint,
+                index + 1,
+                patrol.status,
+              ),
             );
           }).toList(),
         ),
@@ -339,10 +348,15 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
   }
 
   Widget _buildMultiplePatrolRoutes(List<Patrol> patrols) {
-    final validPatrols = patrols.where((p) => 
-        p.checkpoints != null && 
-        p.checkpoints!.any((cp) => cp.latitude != null && cp.longitude != null)
-    ).toList();
+    final validPatrols = patrols
+        .where(
+          (p) =>
+              p.checkpoints != null &&
+              p.checkpoints!.any(
+                (cp) => cp.latitude != null && cp.longitude != null,
+              ),
+        )
+        .toList();
 
     if (validPatrols.isEmpty) {
       return const SizedBox.shrink();
@@ -356,7 +370,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             final checkpoints = patrol.checkpoints!
                 .where((cp) => cp.latitude != null && cp.longitude != null)
                 .toList();
-                
+
             final routePoints = checkpoints
                 .map((cp) => LatLng(cp.latitude!, cp.longitude!))
                 .toList();
@@ -365,26 +379,25 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               points: routePoints,
               strokeWidth: 3.0,
               color: _getPatrolRouteColor(patrol.status).withValues(alpha: 0.7),
-              isDotted: patrol.status == 'completed',
             );
           }).toList(),
         ),
-        
+
         // All checkpoint markers
         MarkerLayer(
           markers: validPatrols.expand((patrol) {
             final checkpoints = patrol.checkpoints!
                 .where((cp) => cp.latitude != null && cp.longitude != null)
                 .toList();
-                
+
             return checkpoints.asMap().entries.map((entry) {
               final index = entry.key;
               final checkpoint = entry.value;
               return Marker(
                 point: LatLng(checkpoint.latitude!, checkpoint.longitude!),
                 child: _buildCheckpointMarker(
-                  checkpoint, 
-                  index + 1, 
+                  checkpoint,
+                  index + 1,
                   patrol.status,
                   compact: true,
                 ),
@@ -397,14 +410,14 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
   }
 
   Widget _buildCheckpointMarker(
-    Checkpoint checkpoint, 
-    int sequenceNumber, 
-    String patrolStatus,
-    {bool compact = false}
-  ) {
+    Checkpoint checkpoint,
+    int sequenceNumber,
+    String patrolStatus, {
+    bool compact = false,
+  }) {
     final Color markerColor = _getCheckpointColor(checkpoint, patrolStatus);
     final IconData markerIcon = _getCheckpointIcon(checkpoint);
-    
+
     return GestureDetector(
       onTap: () => _showCheckpointDetails(checkpoint),
       child: Container(
@@ -422,7 +435,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             ),
           ],
         ),
-        child: compact 
+        child: compact
             ? Icon(markerIcon, color: Colors.white, size: 16)
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -459,7 +472,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
     if (patrolStatus == 'completed') {
       return Colors.green;
     }
-    
+
     if (checkpoint.lastVisitAt != null) {
       return Colors.green; // Visited
     } else if (patrolStatus == 'in_progress') {
@@ -493,7 +506,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
       child: Consumer(
         builder: (context, ref, child) {
           final patrolListState = ref.watch(patrolListProvider);
-          
+
           return switch (patrolListState) {
             PatrolListLoaded(:final patrols) => Container(
               padding: const EdgeInsets.all(12),
@@ -519,7 +532,10 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -550,8 +566,10 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
       right: 16,
       child: Consumer(
         builder: (context, ref, child) {
-          final patrolDetailState = ref.watch(patrolDetailProvider(widget.patrolId!));
-          
+          final patrolDetailState = ref.watch(
+            patrolDetailProvider(widget.patrolId!),
+          );
+
           return switch (patrolDetailState) {
             PatrolDetailLoaded(:final patrol) => Container(
               padding: const EdgeInsets.all(12),
@@ -580,9 +598,14 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getPatrolRouteColor(patrol.status).withValues(alpha: 0.2),
+                          color: _getPatrolRouteColor(
+                            patrol.status,
+                          ).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -669,7 +692,9 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
               children: [
                 Icon(Icons.location_on, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
-                Text('${checkpoint.latitude?.toStringAsFixed(6)}, ${checkpoint.longitude?.toStringAsFixed(6)}'),
+                Text(
+                  '${checkpoint.latitude?.toStringAsFixed(6)}, ${checkpoint.longitude?.toStringAsFixed(6)}',
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -699,26 +724,32 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
     if (authState is! Authenticated) return;
 
     final user = authState.user;
-    
+
     if (user.canAccess('supervisor') || user.canAccess('site manager')) {
       switch (_selectedFilter) {
         case 'active':
           ref.read(patrolListProvider.notifier).loadActivePatrols();
           break;
         case 'pending':
-          ref.read(patrolListProvider.notifier).loadAssignedPatrols(status: 'pending');
+          ref
+              .read(patrolListProvider.notifier)
+              .loadAssignedPatrols(status: 'pending');
           break;
         case 'completed':
-          ref.read(patrolListProvider.notifier).loadAssignedPatrols(status: 'completed');
+          ref
+              .read(patrolListProvider.notifier)
+              .loadAssignedPatrols(status: 'completed');
           break;
         case 'all':
           ref.read(patrolListProvider.notifier).loadActivePatrols();
           break;
       }
     } else {
-      ref.read(patrolListProvider.notifier).loadAssignedPatrols(
-        status: _selectedFilter == 'all' ? null : _selectedFilter,
-      );
+      ref
+          .read(patrolListProvider.notifier)
+          .loadAssignedPatrols(
+            status: _selectedFilter == 'all' ? null : _selectedFilter,
+          );
     }
   }
 }

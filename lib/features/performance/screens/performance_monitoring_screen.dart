@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/performance_provider.dart';
-import '../../../core/providers/intelligent_sync_provider.dart';
+import '../../../core/providers/intelligent_sync_provider.dart'
+    hide syncStatisticsProvider;
 
 /// Performance monitoring and optimization screen
 class PerformanceMonitoringScreen extends ConsumerStatefulWidget {
   const PerformanceMonitoringScreen({super.key});
 
   @override
-  ConsumerState<PerformanceMonitoringScreen> createState() => _PerformanceMonitoringScreenState();
+  ConsumerState<PerformanceMonitoringScreen> createState() =>
+      _PerformanceMonitoringScreenState();
 }
 
-class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitoringScreen> {
+class _PerformanceMonitoringScreenState
+    extends ConsumerState<PerformanceMonitoringScreen> {
   @override
   void initState() {
     super.initState();
@@ -52,34 +55,34 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
           children: [
             // Battery Status Card
             _buildBatteryStatusCard(context, performanceMetrics, batteryStatus),
-            
+
             const SizedBox(height: 16),
-            
+
             // Memory & Performance Card
             _buildPerformanceCard(context, performanceMetrics, memoryStatus),
-            
+
             const SizedBox(height: 16),
-            
+
             // Optimization Controls Card
             _buildOptimizationControlsCard(context, performanceMetrics),
-            
+
             const SizedBox(height: 16),
-            
+
             // Location Tracking Card
             _buildLocationTrackingCard(context, locationStatus),
-            
+
             const SizedBox(height: 16),
-            
+
             // Sync Status Card
             _buildSyncStatusCard(context, syncStats),
-            
+
             const SizedBox(height: 16),
-            
+
             // Intelligent Sync Card
             _buildIntelligentSyncCard(context),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action Buttons
             _buildActionButtons(context),
           ],
@@ -88,9 +91,13 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
     );
   }
 
-  Widget _buildBatteryStatusCard(BuildContext context, PerformanceMetrics metrics, String batteryStatus) {
+  Widget _buildBatteryStatusCard(
+    BuildContext context,
+    PerformanceMetrics metrics,
+    String batteryStatus,
+  ) {
     final batteryColor = _getBatteryColor(metrics.batteryLevel);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -117,16 +124,19 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                       ),
                       Text(
                         batteryStatus,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: batteryColor,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge?.copyWith(color: batteryColor),
                       ),
                     ],
                   ),
                 ),
                 if (metrics.isLowPowerMode)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.orange.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -162,7 +172,11 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
     );
   }
 
-  Widget _buildPerformanceCard(BuildContext context, PerformanceMetrics metrics, String memoryStatus) {
+  Widget _buildPerformanceCard(
+    BuildContext context,
+    PerformanceMetrics metrics,
+    String memoryStatus,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -171,31 +185,33 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.memory,
-                  color: Colors.blue.shade600,
-                  size: 32,
-                ),
+                Icon(Icons.memory, color: Colors.blue.shade600, size: 32),
                 const SizedBox(width: 12),
                 Text(
                   'Device Performance',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             _buildInfoRow('Device Model', metrics.deviceModel),
             _buildInfoRow('Memory Usage', memoryStatus),
-            _buildInfoRow('CPU Usage', '${metrics.cpuUsage.toStringAsFixed(1)}%'),
+            _buildInfoRow(
+              'CPU Usage',
+              '${metrics.cpuUsage.toStringAsFixed(1)}%',
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOptimizationControlsCard(BuildContext context, PerformanceMetrics metrics) {
+  Widget _buildOptimizationControlsCard(
+    BuildContext context,
+    PerformanceMetrics metrics,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -204,48 +220,54 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.tune,
-                  color: Colors.green.shade600,
-                  size: 32,
-                ),
+                Icon(Icons.tune, color: Colors.green.shade600, size: 32),
                 const SizedBox(width: 12),
                 Text(
                   'Optimization Controls',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Low Power Mode Toggle
             SwitchListTile(
               title: const Text('Low Power Mode'),
-              subtitle: const Text('Reduces background activity to save battery'),
+              subtitle: const Text(
+                'Reduces background activity to save battery',
+              ),
               value: metrics.isLowPowerMode,
               onChanged: (value) {
-                ref.read(performanceMetricsProvider.notifier).toggleLowPowerMode(value);
+                ref
+                    .read(performanceMetricsProvider.notifier)
+                    .toggleLowPowerMode(value);
               },
               secondary: Icon(
                 Icons.power_settings_new,
                 color: metrics.isLowPowerMode ? Colors.orange : Colors.grey,
               ),
             ),
-            
+
             const Divider(),
-            
+
             // Location Tracking Toggle
             SwitchListTile(
               title: const Text('Location Tracking'),
-              subtitle: const Text('Enable GPS tracking for patrols and emergencies'),
+              subtitle: const Text(
+                'Enable GPS tracking for patrols and emergencies',
+              ),
               value: metrics.isLocationOptimized,
               onChanged: (value) {
                 if (value) {
-                  ref.read(performanceMetricsProvider.notifier).enableLocationTracking();
+                  ref
+                      .read(performanceMetricsProvider.notifier)
+                      .enableLocationTracking();
                 } else {
-                  ref.read(performanceMetricsProvider.notifier).disableLocationTracking();
+                  ref
+                      .read(performanceMetricsProvider.notifier)
+                      .disableLocationTracking();
                 }
               },
               secondary: Icon(
@@ -253,9 +275,9 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                 color: metrics.isLocationOptimized ? Colors.green : Colors.grey,
               ),
             ),
-            
+
             const Divider(),
-            
+
             // Background Sync Toggle
             SwitchListTile(
               title: const Text('Background Sync'),
@@ -263,9 +285,13 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
               value: metrics.isSyncOptimized,
               onChanged: (value) {
                 if (value) {
-                  ref.read(performanceMetricsProvider.notifier).enableBackgroundSync();
+                  ref
+                      .read(performanceMetricsProvider.notifier)
+                      .enableBackgroundSync();
                 } else {
-                  ref.read(performanceMetricsProvider.notifier).disableBackgroundSync();
+                  ref
+                      .read(performanceMetricsProvider.notifier)
+                      .disableBackgroundSync();
                 }
               },
               secondary: Icon(
@@ -279,11 +305,15 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
     );
   }
 
-  Widget _buildLocationTrackingCard(BuildContext context, Map<String, dynamic> locationStatus) {
+  Widget _buildLocationTrackingCard(
+    BuildContext context,
+    Map<String, dynamic> locationStatus,
+  ) {
     final isEnabled = locationStatus['tracking_enabled'] as bool? ?? false;
     final lastUpdate = locationStatus['last_update'] as String?;
-    final intervalSeconds = locationStatus['update_interval_seconds'] as int? ?? 0;
-    
+    final intervalSeconds =
+        locationStatus['update_interval_seconds'] as int? ?? 0;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -300,9 +330,9 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                 const SizedBox(width: 12),
                 Text(
                   'Location Tracking',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -316,11 +346,14 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
     );
   }
 
-  Widget _buildSyncStatusCard(BuildContext context, Map<String, dynamic> syncStats) {
+  Widget _buildSyncStatusCard(
+    BuildContext context,
+    Map<String, dynamic> syncStats,
+  ) {
     final isEnabled = syncStats['sync_enabled'] as bool? ?? false;
     final pendingOps = syncStats['pending_operations'] as int? ?? 0;
     final lastSync = syncStats['last_successful_sync'] as String?;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -337,9 +370,9 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                 const SizedBox(width: 12),
                 Text(
                   'Background Sync',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -365,32 +398,36 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.sync_alt,
-                  color: Colors.blue.shade600,
-                  size: 28,
-                ),
+                Icon(Icons.sync_alt, color: Colors.blue.shade600, size: 28),
                 const SizedBox(width: 12),
                 Text(
                   'Intelligent Sync',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 syncStatistics.when(
                   data: (stats) {
-                    final isOptimized = (stats['current_interval_minutes'] as int) > 15;
+                    final isOptimized =
+                        (stats['current_interval_minutes'] as int) > 15;
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: isOptimized ? Colors.green.shade100 : Colors.blue.shade100,
+                        color: isOptimized
+                            ? Colors.green.shade100
+                            : Colors.blue.shade100,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         isOptimized ? 'Optimized' : 'Standard',
                         style: TextStyle(
-                          color: isOptimized ? Colors.green.shade700 : Colors.blue.shade700,
+                          color: isOptimized
+                              ? Colors.green.shade700
+                              : Colors.blue.shade700,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -402,21 +439,37 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  error: (_, __) => Icon(Icons.error, color: Colors.red.shade400, size: 16),
+                  error: (_, __) =>
+                      Icon(Icons.error, color: Colors.red.shade400, size: 16),
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             syncStatistics.when(
               data: (stats) => Column(
                 children: [
-                  _buildSyncStatRow('Sync Interval', '${stats['current_interval_minutes']} minutes'),
-                  _buildSyncStatRow('Battery Level', '${stats['battery_level']}%'),
-                  _buildSyncStatRow('Low Power Mode', stats['is_low_power_mode'] ? 'Yes' : 'No'),
-                  _buildSyncStatRow('Connectivity', _formatConnectivity(stats['connectivity'])),
-                  _buildSyncStatRow('Status', stats['is_initialized'] ? 'Active' : 'Inactive'),
+                  _buildSyncStatRow(
+                    'Sync Interval',
+                    '${stats['current_interval_minutes']} minutes',
+                  ),
+                  _buildSyncStatRow(
+                    'Battery Level',
+                    '${stats['battery_level']}%',
+                  ),
+                  _buildSyncStatRow(
+                    'Low Power Mode',
+                    stats['is_low_power_mode'] ? 'Yes' : 'No',
+                  ),
+                  _buildSyncStatRow(
+                    'Connectivity',
+                    _formatConnectivity(stats['connectivity']),
+                  ),
+                  _buildSyncStatRow(
+                    'Status',
+                    stats['is_initialized'] ? 'Active' : 'Inactive',
+                  ),
                 ],
               ),
               loading: () => const Center(
@@ -433,17 +486,24 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Sync Control Buttons
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: syncControl.isLoading ? null : () {
-                      ref.read(syncControlProvider.notifier).triggerSync(criticalOnly: true, reason: 'manual_critical');
-                    },
+                    onPressed: syncControl.isLoading
+                        ? null
+                        : () {
+                            ref
+                                .read(syncControlProvider.notifier)
+                                .triggerSync(
+                                  criticalOnly: true,
+                                  reason: 'manual_critical',
+                                );
+                          },
                     icon: const Icon(Icons.priority_high),
                     label: const Text('Critical Sync'),
                     style: OutlinedButton.styleFrom(
@@ -454,9 +514,13 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: syncControl.isLoading ? null : () {
-                      ref.read(syncControlProvider.notifier).triggerSync(reason: 'manual_full');
-                    },
+                    onPressed: syncControl.isLoading
+                        ? null
+                        : () {
+                            ref
+                                .read(syncControlProvider.notifier)
+                                .triggerSync(reason: 'manual_full');
+                          },
                     icon: const Icon(Icons.sync),
                     label: const Text('Full Sync'),
                     style: ElevatedButton.styleFrom(
@@ -467,42 +531,57 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                 ),
               ],
             ),
-            
+
             // Show sync control status
             syncControl.when(
-              data: (message) => message != null ? Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.green.shade600, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: TextStyle(
-                            color: Colors.green.shade700,
-                            fontSize: 14,
-                          ),
+              data: (message) => message != null
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green.shade600,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                message,
+                                style: TextStyle(
+                                  color: Colors.green.shade700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => ref
+                                  .read(syncControlProvider.notifier)
+                                  .clearStatus(),
+                              icon: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.green.shade600,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 24,
+                                minHeight: 24,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => ref.read(syncControlProvider.notifier).clearStatus(),
-                        icon: Icon(Icons.close, size: 16, color: Colors.green.shade600),
-                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                ),
-              ) : const SizedBox.shrink(),
+                    )
+                  : const SizedBox.shrink(),
               loading: () => Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Container(
@@ -559,9 +638,18 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
                         ),
                       ),
                       IconButton(
-                        onPressed: () => ref.read(syncControlProvider.notifier).clearStatus(),
-                        icon: Icon(Icons.close, size: 16, color: Colors.red.shade600),
-                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                        onPressed: () => ref
+                            .read(syncControlProvider.notifier)
+                            .clearStatus(),
+                        icon: Icon(
+                          Icons.close,
+                          size: 16,
+                          color: Colors.red.shade600,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 24,
+                          minHeight: 24,
+                        ),
                         padding: EdgeInsets.zero,
                       ),
                     ],
@@ -581,16 +669,10 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14),
-          ),
+          Text(label, style: const TextStyle(fontSize: 14)),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -599,7 +681,12 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
 
   String _formatConnectivity(dynamic connectivity) {
     if (connectivity == null) return 'Unknown';
-    return connectivity.toString().split('.').last.replaceAll('_', ' ').toUpperCase();
+    return connectivity
+        .toString()
+        .split('.')
+        .last
+        .replaceAll('_', ' ')
+        .toUpperCase();
   }
 
   Widget _buildActionButtons(BuildContext context) {
@@ -610,7 +697,9 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  ref.read(performanceMetricsProvider.notifier).forceLocationUpdate();
+                  ref
+                      .read(performanceMetricsProvider.notifier)
+                      .forceLocationUpdate();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Updating location...')),
                   );
@@ -661,14 +750,8 @@ class _PerformanceMonitoringScreenState extends ConsumerState<PerformanceMonitor
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
