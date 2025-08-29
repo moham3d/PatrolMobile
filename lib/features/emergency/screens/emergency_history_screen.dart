@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/emergency_provider.dart';
 import '../../../core/models/emergency.dart';
-import '../../../core/widgets/role_based_widget.dart';
 
 /// Emergency history screen showing all past emergency alerts
 class EmergencyHistoryScreen extends ConsumerStatefulWidget {

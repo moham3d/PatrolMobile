@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../constants/app_constants.dart';
 import '../models/patrol_simple.dart';
 import '../models/checkpoint.dart';
+import '../models/patrol_history.dart';
 import '../exceptions/api_exception.dart';
 import 'api_service.dart';
 
@@ -9,14 +10,11 @@ import 'api_service.dart';
 class PatrolService {
   static PatrolService? _instance;
   static PatrolService get instance => _instance ??= PatrolService._internal();
-  
+
   PatrolService._internal();
 
   /// Get assigned patrols for current user
-  Future<List<Patrol>> getAssignedPatrols({
-    String? status,
-    int? siteId,
-  }) async {
+  Future<List<Patrol>> getAssignedPatrols({String? status, int? siteId}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (status != null) queryParams['status'] = status;
@@ -27,7 +25,8 @@ class PatrolService {
         queryParameters: queryParams,
       );
 
-      final List<dynamic> patrolsData = response.data?['patrols'] ?? response.data?['data'] ?? [];
+      final List<dynamic> patrolsData =
+          response.data?['patrols'] ?? response.data?['data'] ?? [];
       return patrolsData.map((patrol) => Patrol.fromJson(patrol)).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -59,9 +58,11 @@ class PatrolService {
         patrolId: patrolId,
         name: data['name'] ?? 'Patrol Route',
         description: data['description'],
-        checkpoints: (data['checkpoints'] as List<dynamic>?)
-            ?.map((c) => Checkpoint.fromJson(c))
-            .toList() ?? [],
+        checkpoints:
+            (data['checkpoints'] as List<dynamic>?)
+                ?.map((c) => Checkpoint.fromJson(c))
+                .toList() ??
+            [],
         totalDistance: data['total_distance']?.toDouble(),
         estimatedDuration: data['estimated_duration'],
         optimizedSequence: (data['optimized_sequence'] as List<dynamic>?)
@@ -87,10 +88,10 @@ class PatrolService {
         visitedCheckpoints: data['visited_checkpoints'] ?? 0,
         completionPercentage: (data['completion_percentage'] ?? 0.0).toDouble(),
         startTime: data['start_time'],
-        currentCheckpoint: data['current_checkpoint'] != null 
+        currentCheckpoint: data['current_checkpoint'] != null
             ? Checkpoint.fromJson(data['current_checkpoint'])
             : null,
-        nextCheckpoint: data['next_checkpoint'] != null 
+        nextCheckpoint: data['next_checkpoint'] != null
             ? Checkpoint.fromJson(data['next_checkpoint'])
             : null,
         recentVisits: (data['recent_visits'] as List<dynamic>?)
@@ -104,7 +105,8 @@ class PatrolService {
   }
 
   /// Start patrol
-  Future<PatrolActionResponse> startPatrol(int patrolId, {
+  Future<PatrolActionResponse> startPatrol(
+    int patrolId, {
     double? latitude,
     double? longitude,
     double? accuracy,
@@ -130,7 +132,8 @@ class PatrolService {
   }
 
   /// End patrol
-  Future<PatrolActionResponse> endPatrol(int patrolId, {
+  Future<PatrolActionResponse> endPatrol(
+    int patrolId, {
     double? latitude,
     double? longitude,
     double? accuracy,
@@ -156,7 +159,8 @@ class PatrolService {
   }
 
   /// Complete patrol
-  Future<PatrolActionResponse> completePatrol(int patrolId, {
+  Future<PatrolActionResponse> completePatrol(
+    int patrolId, {
     double? latitude,
     double? longitude,
     double? accuracy,
@@ -182,7 +186,8 @@ class PatrolService {
   }
 
   /// Cancel patrol
-  Future<PatrolActionResponse> cancelPatrol(int patrolId, {
+  Future<PatrolActionResponse> cancelPatrol(
+    int patrolId, {
     String? reason,
     double? latitude,
     double? longitude,
@@ -274,7 +279,8 @@ class PatrolService {
       if (userId != null) queryParams['user_id'] = userId;
       if (siteId != null) queryParams['site_id'] = siteId;
       if (status != null) queryParams['status'] = status;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String();
       if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
       if (limit != null) queryParams['limit'] = limit;
 
@@ -283,22 +289,20 @@ class PatrolService {
         queryParameters: queryParams,
       );
 
-      final List<dynamic> historyData = response.data?['history'] ?? response.data?['data'] ?? [];
-      return historyData.map((entry) => PatrolHistoryEntry.fromJson(entry)).toList();
+      final List<dynamic> historyData =
+          response.data?['history'] ?? response.data?['data'] ?? [];
+      return historyData
+          .map((entry) => PatrolHistoryEntry.fromJson(entry))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
   /// Get active patrols for monitoring (supervisor/manager view)
-  Future<List<Patrol>> getActivePatrols({
-    int? siteId,
-    int? assignedTo,
-  }) async {
+  Future<List<Patrol>> getActivePatrols({int? siteId, int? assignedTo}) async {
     try {
-      final queryParams = <String, dynamic>{
-        'status': 'in_progress',
-      };
+      final queryParams = <String, dynamic>{'status': 'in_progress'};
       if (siteId != null) queryParams['site_id'] = siteId;
       if (assignedTo != null) queryParams['assigned_to'] = assignedTo;
 
@@ -307,7 +311,8 @@ class PatrolService {
         queryParameters: queryParams,
       );
 
-      final List<dynamic> patrolsData = response.data?['patrols'] ?? response.data?['data'] ?? [];
+      final List<dynamic> patrolsData =
+          response.data?['patrols'] ?? response.data?['data'] ?? [];
       return patrolsData.map((patrol) => Patrol.fromJson(patrol)).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -323,7 +328,8 @@ class PatrolService {
     try {
       final queryParams = <String, dynamic>{};
       if (siteId != null) queryParams['site_id'] = siteId;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String();
       if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
 
       final response = await ApiService.instance.get<Map<String, dynamic>>(
@@ -352,7 +358,8 @@ class PatrolService {
       if (status != null) queryParams['status'] = status;
       if (siteId != null) queryParams['site_id'] = siteId;
       if (assignedTo != null) queryParams['assigned_to'] = assignedTo;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String();
       if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
 
       final response = await ApiService.instance.get<Map<String, dynamic>>(
@@ -360,7 +367,8 @@ class PatrolService {
         queryParameters: queryParams,
       );
 
-      final List<dynamic> patrolsData = response.data?['patrols'] ?? response.data?['data'] ?? [];
+      final List<dynamic> patrolsData =
+          response.data?['patrols'] ?? response.data?['data'] ?? [];
       return patrolsData.map((patrol) => Patrol.fromJson(patrol)).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -393,9 +401,11 @@ class PatrolService {
         patrolId: patrolId,
         name: data['name'] ?? 'Optimized Route',
         description: data['description'],
-        checkpoints: (data['checkpoints'] as List<dynamic>?)
-            ?.map((c) => Checkpoint.fromJson(c))
-            .toList() ?? [],
+        checkpoints:
+            (data['checkpoints'] as List<dynamic>?)
+                ?.map((c) => Checkpoint.fromJson(c))
+                .toList() ??
+            [],
         totalDistance: data['total_distance']?.toDouble(),
         estimatedDuration: data['estimated_duration'],
         optimizedSequence: (data['optimized_sequence'] as List<dynamic>?)
@@ -408,9 +418,7 @@ class PatrolService {
   }
 
   /// Get live patrol status (for monitoring)
-  Future<List<Map<String, dynamic>>> getLivePatrolStatus({
-    int? siteId,
-  }) async {
+  Future<List<Map<String, dynamic>>> getLivePatrolStatus({int? siteId}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (siteId != null) queryParams['site_id'] = siteId;
@@ -420,8 +428,11 @@ class PatrolService {
         queryParameters: queryParams,
       );
 
-      final List<dynamic> statusData = response.data?['patrols'] ?? response.data?['data'] ?? [];
-      return statusData.map((status) => status as Map<String, dynamic>).toList();
+      final List<dynamic> statusData =
+          response.data?['patrols'] ?? response.data?['data'] ?? [];
+      return statusData
+          .map((status) => status as Map<String, dynamic>)
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

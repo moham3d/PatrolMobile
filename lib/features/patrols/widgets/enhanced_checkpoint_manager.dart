@@ -438,7 +438,7 @@ class _EnhancedCheckpointManagerState extends ConsumerState<EnhancedCheckpointMa
           shape: BoxShape.circle,
           border: Border.all(color: Colors.blue, width: 3),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.location_on,
           color: Colors.blue,
           size: 24,
@@ -453,7 +453,7 @@ class _EnhancedCheckpointManagerState extends ConsumerState<EnhancedCheckpointMa
           shape: BoxShape.circle,
           border: Border.all(color: Colors.orange, width: 2),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.schedule,
           color: Colors.orange,
           size: 24,

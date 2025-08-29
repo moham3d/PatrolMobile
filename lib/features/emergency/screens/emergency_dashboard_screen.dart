@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/emergency_provider.dart';
-import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/auth_provider.dart' as authProv;
 import '../../../core/models/emergency.dart';
 import '../../../core/widgets/role_based_widget.dart';
 import '../../../core/constants/app_constants.dart';
@@ -12,10 +12,12 @@ class EmergencyDashboardScreen extends ConsumerStatefulWidget {
   const EmergencyDashboardScreen({super.key});
 
   @override
-  ConsumerState<EmergencyDashboardScreen> createState() => _EmergencyDashboardScreenState();
+  ConsumerState<EmergencyDashboardScreen> createState() =>
+      _EmergencyDashboardScreenState();
 }
 
-class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScreen> 
+class _EmergencyDashboardScreenState
+    extends ConsumerState<EmergencyDashboardScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
 
@@ -23,7 +25,7 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    
+
     // Load emergency data when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(emergencyAlertsProvider.notifier).loadAlerts();
@@ -38,9 +40,9 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authNotifierProvider);
-    final user = authState is Authenticated ? authState.user : null;
-    
+    final authState = ref.watch(authProv.authNotifierProvider);
+    final user = authState is authProv.Authenticated ? authState.user : null;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Emergency Management'),
@@ -100,7 +102,7 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
           if (emergencyState is Loading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (emergencyState is EmergencyError) {
             return Center(
               child: Column(
@@ -111,17 +113,20 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
                   Text('Error: ${emergencyState.message}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => emergencyNotifier.loadAlerts(status: 'active'),
+                    onPressed: () =>
+                        emergencyNotifier.loadAlerts(status: 'active'),
                     child: const Text('Retry'),
                   ),
                 ],
               ),
             );
           }
-          
+
           if (emergencyState is Loaded) {
-            final activeAlerts = emergencyState.alerts.where((alert) => alert.isActive).toList();
-            
+            final activeAlerts = emergencyState.alerts
+                .where((alert) => alert.isActive)
+                .toList();
+
             if (activeAlerts.isEmpty) {
               return const Center(
                 child: Column(
@@ -135,7 +140,10 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
                     SizedBox(height: 16),
                     Text(
                       'No Active Emergencies',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 8),
                     Text(
@@ -156,17 +164,13 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
               },
             );
           }
-          
+
           // Default state - show empty state
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  size: 64,
-                  color: Colors.green,
-                ),
+                Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
                 SizedBox(height: 16),
                 Text(
                   'No Active Emergencies',
@@ -198,7 +202,10 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: alert.severityColor,
                     borderRadius: BorderRadius.circular(12),
@@ -214,7 +221,10 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange,
                     borderRadius: BorderRadius.circular(12),
@@ -240,10 +250,7 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
             ),
             const SizedBox(height: 12),
             if (alert.description != null) ...[
-              Text(
-                alert.description!,
-                style: const TextStyle(fontSize: 16),
-              ),
+              Text(alert.description!, style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 8),
             ],
             Row(
@@ -263,9 +270,7 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
                 children: [
                   const Icon(Icons.location_on, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(alert.locationName!),
-                  ),
+                  Expanded(child: Text(alert.locationName!)),
                 ],
               ),
             ],
@@ -278,7 +283,8 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
                   if (!alert.isAcknowledged) ...[
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => _acknowledgeAlert(alert.id, emergencyNotifier),
+                        onPressed: () =>
+                            _acknowledgeAlert(alert.id, emergencyNotifier),
                         icon: const Icon(Icons.check),
                         label: const Text('Acknowledge'),
                         style: ElevatedButton.styleFrom(
@@ -390,14 +396,16 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          Card(
+          const Card(
             child: ListTile(
-              leading: const Icon(Icons.timer),
-              title: const Text('Escalation Timer'),
-              subtitle: Text('${AppConstants.emergencyEscalationMinutes} minutes'),
+              leading: Icon(Icons.timer),
+              title: Text('Escalation Timer'),
+              subtitle: Text(
+                '${AppConstants.emergencyEscalationMinutes} minutes',
+              ),
               trailing: RoleBasedWidget(
-                allowedRoles: const ['admin', 'site manager'],
-                child: const Icon(Icons.edit),
+                allowedRoles: ['admin', 'site manager'],
+                child: Icon(Icons.edit),
               ),
             ),
           ),
@@ -467,7 +475,10 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
 
   void _acknowledgeAlert(int alertId, dynamic emergencyNotifier) async {
     try {
-      await emergencyNotifier.acknowledgeAlert(alertId, note: 'Acknowledged via dashboard');
+      await emergencyNotifier.acknowledgeAlert(
+        alertId,
+        note: 'Acknowledged via dashboard',
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -516,7 +527,8 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop('Manual escalation required'),
+            onPressed: () =>
+                Navigator.of(context).pop('Manual escalation required'),
             child: const Text('Escalate'),
           ),
         ],
@@ -556,7 +568,9 @@ class _EmergencyDashboardScreenState extends ConsumerState<EmergencyDashboardScr
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Test Emergency Contacts'),
-        content: const Text('This will test connectivity to all emergency contacts. Continue?'),
+        content: const Text(
+          'This will test connectivity to all emergency contacts. Continue?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

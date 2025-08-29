@@ -180,7 +180,7 @@ class PatrolQuickFilters extends StatelessWidget {
       {'value': 'today', 'label': 'Today', 'icon': Icons.today},
     ];
 
-    return Container(
+    return SizedBox(
       height: 50,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 // ...existing code...
@@ -49,6 +48,11 @@ class NFCScannerService {
 
     try {
       await NfcManager.instance.startSession(
+        pollingOptions: {
+          NfcPollingOption.iso14443,
+          NfcPollingOption.iso15693,
+          NfcPollingOption.iso18092,
+        },
         onDiscovered: (NfcTag tag) async {
           final result = await _processNFCTag(tag);
           if (result != null) {
@@ -88,7 +92,7 @@ class NFCScannerService {
   /// Process discovered NFC tag
   Future<String?> _processNFCTag(NfcTag tag) async {
     try {
-      final tagMap = tag.data as Map<String, dynamic>;
+      final tagMap = tag as Map<String, dynamic>;
       String? tagData;
       // NDEF (NFC Data Exchange Format)
       if (tagMap.containsKey('ndef')) {

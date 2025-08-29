@@ -1,4 +1,5 @@
 /// Models for synchronization operations and results
+library;
 
 /// Sync priority levels
 enum SyncPriority {

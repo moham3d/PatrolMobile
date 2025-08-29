@@ -231,7 +231,7 @@ class LocationOptimizationService {
         'latitude': _lastKnownPosition!.latitude,
         'longitude': _lastKnownPosition!.longitude,
         'accuracy': _lastKnownPosition!.accuracy,
-        'timestamp': _lastKnownPosition!.timestamp?.toIso8601String(),
+        'timestamp': _lastKnownPosition!.timestamp.toIso8601String(),
       } : null,
     };
   }

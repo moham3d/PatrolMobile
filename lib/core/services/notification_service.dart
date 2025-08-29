@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../constants/app_constants.dart';
-import '../models/emergency.dart';
 
 /// Notification service for push notifications and local notifications
 class NotificationService {

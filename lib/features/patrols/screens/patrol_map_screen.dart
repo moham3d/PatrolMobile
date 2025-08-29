@@ -171,7 +171,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
         children: [
           if (_currentLocation != null)
             FloatingActionButton(
-              heroTag: "center_location",
+              heroTag: 'center_location',
               mini: true,
               onPressed: () {
                 _mapController.move(
@@ -183,7 +183,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
             ),
           const SizedBox(height: 16),
           FloatingActionButton(
-            heroTag: "refresh_patrols",
+            heroTag: 'refresh_patrols',
             onPressed: _loadInitialData,
             child: const Icon(Icons.refresh),
           ),
@@ -514,7 +514,7 @@ class _PatrolMapScreenState extends ConsumerState<PatrolMapScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${patrols.length} ${_selectedFilter} patrol${patrols.length != 1 ? 's' : ''}',
+                      '${patrols.length} $_selectedFilter patrol${patrols.length != 1 ? 's' : ''}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

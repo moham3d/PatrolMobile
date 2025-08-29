@@ -383,7 +383,7 @@ class EmergencyService {
         );
         return true;
       } else {
-        throw EmergencyException(
+        throw const EmergencyException(
           message: 'Cannot make phone calls on this device',
           code: 'PHONE_NOT_SUPPORTED',
         );

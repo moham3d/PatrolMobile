@@ -11,8 +11,9 @@ import 'auth_service.dart';
 /// Enhanced checkpoint service with offline capabilities
 class OfflineCheckpointService {
   static OfflineCheckpointService? _instance;
-  static OfflineCheckpointService get instance => _instance ??= OfflineCheckpointService._internal();
-  
+  static OfflineCheckpointService get instance =>
+      _instance ??= OfflineCheckpointService._internal();
+
   OfflineCheckpointService._internal();
 
   final ApiService _apiService = ApiService.instance;
@@ -62,9 +63,9 @@ class OfflineCheckpointService {
         try {
           final visitRequest = CheckpointVisitRequest(
             checkpointId: checkpoint.id,
-            code: code,
+            checkpointCode: code,
             scanMethod: scanMethod,
-            patrolId: patrolId,
+            scannedCode: code,
             latitude: latitude,
             longitude: longitude,
             locationAccuracy: accuracy,
@@ -72,8 +73,11 @@ class OfflineCheckpointService {
             deviceTimestamp: deviceTimestamp,
           );
 
-          final response = await _submitCheckpointVisit(visitRequest);
-          
+          final response = await _submitCheckpointVisit(
+            visitRequest,
+            patrolId: patrolId,
+          );
+
           return CheckpointScanResult(
             success: true,
             message: 'Checkpoint scanned successfully',
@@ -108,7 +112,6 @@ class OfflineCheckpointService {
         isOffline: true,
         offlineId: offlineId,
       );
-
     } catch (e) {
       return CheckpointScanResult(
         success: false,
@@ -143,7 +146,7 @@ class OfflineCheckpointService {
           isValid: data['is_valid'] ?? false,
           message: data['message'] ?? '',
           errorCode: data['error_code'],
-          checkpoint: data['checkpoint'] != null 
+          checkpoint: data['checkpoint'] != null
               ? Checkpoint.fromJson(data['checkpoint'])
               : null,
         );
@@ -165,9 +168,9 @@ class OfflineCheckpointService {
   ) async {
     try {
       final checkpoint = await _databaseService.getCachedCheckpointByCode(code);
-      
+
       if (checkpoint == null) {
-        return CheckpointVerification(
+        return const CheckpointVerification(
           isValid: false,
           message: 'Checkpoint not found in offline cache',
           errorCode: 'CHECKPOINT_NOT_CACHED',
@@ -175,7 +178,7 @@ class OfflineCheckpointService {
       }
 
       if (!checkpoint.isActive) {
-        return CheckpointVerification(
+        return const CheckpointVerification(
           isValid: false,
           message: 'Checkpoint is not active',
           errorCode: 'CHECKPOINT_INACTIVE',
@@ -183,11 +186,15 @@ class OfflineCheckpointService {
       }
 
       // Verify location if provided and checkpoint has coordinates
-      if (latitude != null && longitude != null && 
-          checkpoint.latitude != null && checkpoint.longitude != null) {
+      if (latitude != null &&
+          longitude != null &&
+          checkpoint.latitude != null &&
+          checkpoint.longitude != null) {
         final distance = _calculateDistance(
-          latitude, longitude,
-          checkpoint.latitude!, checkpoint.longitude!,
+          latitude,
+          longitude,
+          checkpoint.latitude!,
+          checkpoint.longitude!,
         );
 
         // Allow up to 50 meters variance for GPS accuracy
@@ -217,14 +224,15 @@ class OfflineCheckpointService {
 
   /// Submit checkpoint visit to API
   Future<CheckpointVisitResponse> _submitCheckpointVisit(
-    CheckpointVisitRequest request,
-  ) async {
+    CheckpointVisitRequest request, {
+    int? patrolId,
+  }) async {
     try {
       // Try patrol-specific endpoint first if patrol ID is provided
-      if (request.patrolId != null) {
+      if (patrolId != null) {
         try {
           final response = await _apiService.post<Map<String, dynamic>>(
-            '${AppConstants.mobileApiBase}/patrols/${request.patrolId}/checkpoints/visit',
+            '${AppConstants.mobileApiBase}/patrols/$patrolId/checkpoints/visit',
             data: request.toJson(),
           );
           return CheckpointVisitResponse.fromJson(response.data!);
@@ -238,7 +246,7 @@ class OfflineCheckpointService {
         '${AppConstants.checkpointsEndpoint}/visit',
         data: request.toJson(),
       );
-      
+
       return CheckpointVisitResponse.fromJson(response.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -263,16 +271,18 @@ class OfflineCheckpointService {
           queryParameters: queryParams,
         );
 
-        final List<dynamic> data = response.data?['checkpoints'] ?? 
-                                  response.data?['data'] ?? [];
-        
-        final checkpoints = data.map((json) => Checkpoint.fromJson(json)).toList();
-        
+        final List<dynamic> data =
+            response.data?['checkpoints'] ?? response.data?['data'] ?? [];
+
+        final checkpoints = data
+            .map((json) => Checkpoint.fromJson(json))
+            .toList();
+
         // Cache the fetched data for offline use
         for (final checkpoint in checkpoints) {
           await _databaseService.cacheCheckpoint(checkpoint);
         }
-        
+
         return checkpoints;
       } catch (e) {
         print('Online fetch failed, falling back to offline: $e');
@@ -286,7 +296,10 @@ class OfflineCheckpointService {
   }
 
   /// Get checkpoint by ID with offline fallback
-  Future<Checkpoint?> getCheckpoint(int checkpointId, {bool forceOffline = false}) async {
+  Future<Checkpoint?> getCheckpoint(
+    int checkpointId, {
+    bool forceOffline = false,
+  }) async {
     if (!forceOffline && _connectivityService.isOnline) {
       try {
         final response = await _apiService.get<Map<String, dynamic>>(
@@ -294,10 +307,10 @@ class OfflineCheckpointService {
         );
 
         final checkpoint = Checkpoint.fromJson(response.data!);
-        
+
         // Cache for offline use
         await _databaseService.cacheCheckpoint(checkpoint);
-        
+
         return checkpoint;
       } catch (e) {
         print('Online fetch failed, trying offline: $e');
@@ -309,19 +322,26 @@ class OfflineCheckpointService {
   }
 
   /// Calculate distance between two coordinates in meters
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  double _calculateDistance(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     const double earthRadius = 6371000; // Earth's radius in meters
-    
+
     final double dLat = _toRadians(lat2 - lat1);
     final double dLon = _toRadians(lon2 - lon1);
-    
-    final double a = 
+
+    final double a =
         sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRadians(lat1)) * cos(_toRadians(lat2)) *
-        sin(dLon / 2) * sin(dLon / 2);
-    
+        cos(_toRadians(lat1)) *
+            cos(_toRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+
     final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    
+
     return earthRadius * c;
   }
 
@@ -376,4 +396,3 @@ class CheckpointVerification {
     this.checkpoint,
   });
 }
-

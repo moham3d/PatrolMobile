@@ -209,7 +209,7 @@ class _IncidentReportScreenState extends ConsumerState<IncidentReportScreen> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.priority_high),
               ),
-              value: _selectedPriority,
+              initialValue: _selectedPriority,
               items: _priorities.map((priority) {
                 return DropdownMenuItem(
                   value: priority,

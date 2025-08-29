@@ -12,10 +12,12 @@ class EmergencyResponseScreen extends ConsumerStatefulWidget {
   const EmergencyResponseScreen({super.key});
 
   @override
-  ConsumerState<EmergencyResponseScreen> createState() => _EmergencyResponseScreenState();
+  ConsumerState<EmergencyResponseScreen> createState() =>
+      _EmergencyResponseScreenState();
 }
 
-class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScreen> {
+class _EmergencyResponseScreenState
+    extends ConsumerState<EmergencyResponseScreen> {
   @override
   void initState() {
     super.initState();
@@ -50,11 +52,13 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
     );
   }
 
-  Widget _buildBody(BuildContext context, EmergencyAlertsState state, EmergencyAlertsNotifier notifier) {
+  Widget _buildBody(
+    BuildContext context,
+    EmergencyAlertsState state,
+    EmergencyAlertsNotifier notifier,
+  ) {
     if (state is Loading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (state is EmergencyError) {
@@ -62,11 +66,7 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red.shade300,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
             const SizedBox(height: 16),
             Text(
               'Error loading alerts',
@@ -90,17 +90,13 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
 
     if (state is Loaded) {
       final alerts = state.alerts;
-      
+
       if (alerts.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.security,
-                size: 64,
-                color: Colors.green.shade300,
-              ),
+              Icon(Icons.security, size: 64, color: Colors.green.shade300),
               const SizedBox(height: 16),
               Text(
                 'No Active Alerts',
@@ -109,9 +105,9 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
               const SizedBox(height: 8),
               Text(
                 'All systems are running normally',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -131,15 +127,17 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
       );
     }
 
-    return const Center(
-      child: Text('No alerts loaded'),
-    );
+    return const Center(child: Text('No alerts loaded'));
   }
 
-  Widget _buildAlertCard(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) {
+  Widget _buildAlertCard(
+    BuildContext context,
+    EmergencyAlert alert,
+    EmergencyAlertsNotifier notifier,
+  ) {
     final severityColor = _getSeverityColor(alert.severity);
     final statusColor = _getStatusColor(alert.status);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
@@ -155,7 +153,10 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: severityColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -171,7 +172,10 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -194,19 +198,19 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Alert description
               Text(
-                alert.description,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                alert.description ?? '',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // User info
               Row(
                 children: [
@@ -234,9 +238,9 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                   ],
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Action buttons
               Row(
                 children: [
@@ -256,7 +260,8 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: () => _resolveAlert(context, alert, notifier),
+                        onPressed: () =>
+                            _resolveAlert(context, alert, notifier),
                         icon: const Icon(Icons.done),
                         label: const Text('Resolve'),
                         style: ElevatedButton.styleFrom(
@@ -268,7 +273,8 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                     Expanded(
                       flex: 1,
                       child: IconButton(
-                        onPressed: () => _escalateAlert(context, alert, notifier),
+                        onPressed: () =>
+                            _escalateAlert(context, alert, notifier),
                         icon: const Icon(Icons.trending_up),
                         color: Colors.red,
                         tooltip: 'Escalate',
@@ -278,7 +284,8 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                     Expanded(
                       flex: 3,
                       child: ElevatedButton.icon(
-                        onPressed: () => _resolveAlert(context, alert, notifier),
+                        onPressed: () =>
+                            _resolveAlert(context, alert, notifier),
                         icon: const Icon(Icons.done),
                         label: const Text('Resolve'),
                         style: ElevatedButton.styleFrom(
@@ -290,7 +297,8 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                     Expanded(
                       flex: 1,
                       child: IconButton(
-                        onPressed: () => _escalateAlert(context, alert, notifier),
+                        onPressed: () =>
+                            _escalateAlert(context, alert, notifier),
                         icon: const Icon(Icons.trending_up),
                         color: Colors.red,
                         tooltip: 'Escalate',
@@ -352,7 +360,7 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
       final dateTime = DateTime.parse(timestamp);
       final now = DateTime.now();
       final difference = now.difference(dateTime);
-      
+
       if (difference.inMinutes < 1) {
         return 'Just now';
       } else if (difference.inHours < 1) {
@@ -367,10 +375,13 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
     }
   }
 
-  void _acknowledgeAlert(EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
+  void _acknowledgeAlert(
+    EmergencyAlert alert,
+    EmergencyAlertsNotifier notifier,
+  ) async {
     // Show acknowledgment dialog
     final acknowledgmentNote = await _showAcknowledgmentDialog(context);
-    
+
     try {
       await notifier.acknowledgeAlert(alert.id, note: acknowledgmentNote);
       if (mounted) {
@@ -393,17 +404,28 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
     }
   }
 
-  void _resolveAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
+  void _resolveAlert(
+    BuildContext context,
+    EmergencyAlert alert,
+    EmergencyAlertsNotifier notifier,
+  ) async {
     // Navigate to the enhanced cancel/resolve screen
-    final result = await context.push('/emergency/cancel-resolve', extra: alert);
-    
+    final result = await context.push(
+      '/emergency/cancel-resolve',
+      extra: alert,
+    );
+
     if (result == true) {
       // Alert was successfully resolved/cancelled, reload alerts
       notifier.loadAlerts();
     }
   }
 
-  void _escalateAlert(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) async {
+  void _escalateAlert(
+    BuildContext context,
+    EmergencyAlert alert,
+    EmergencyAlertsNotifier notifier,
+  ) async {
     final escalationReason = await _showEscalationDialog(context);
     if (escalationReason != null && escalationReason.isNotEmpty) {
       try {
@@ -431,16 +453,13 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
 
   Future<String?> _showEscalationDialog(BuildContext context) async {
     final controller = TextEditingController();
-    
+
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(
-              Icons.trending_up,
-              color: Colors.red.shade600,
-            ),
+            Icon(Icons.trending_up, color: Colors.red.shade600),
             const SizedBox(width: 8),
             const Text('Escalate Alert'),
           ],
@@ -482,7 +501,7 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
 
   Future<String?> _showAcknowledgmentDialog(BuildContext context) async {
     final controller = TextEditingController();
-    
+
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -490,7 +509,9 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Acknowledge that you have received and are responding to this alert.'),
+            const Text(
+              'Acknowledge that you have received and are responding to this alert.',
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -517,11 +538,13 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
     );
   }
 
-  Future<Map<String, dynamic>?> _showEnhancedResolutionDialog(BuildContext context) async {
+  Future<Map<String, dynamic>?> _showEnhancedResolutionDialog(
+    BuildContext context,
+  ) async {
     final notesController = TextEditingController();
     String selectedType = 'resolved';
     final followUpActions = <String>[];
-    
+
     return showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -535,16 +558,31 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                 const Text('Resolution Type:'),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: selectedType,
+                  initialValue: selectedType,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'resolved', child: Text('Resolved')),
-                    DropdownMenuItem(value: 'false_alarm', child: Text('False Alarm')),
-                    DropdownMenuItem(value: 'duplicate', child: Text('Duplicate')),
-                    DropdownMenuItem(value: 'referred', child: Text('Referred to Others')),
+                    DropdownMenuItem(
+                      value: 'resolved',
+                      child: Text('Resolved'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'false_alarm',
+                      child: Text('False Alarm'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'duplicate',
+                      child: Text('Duplicate'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'referred',
+                      child: Text('Referred to Others'),
+                    ),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -566,14 +604,16 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
                 const SizedBox(height: 16),
                 const Text('Follow-up Actions (optional):'),
                 const SizedBox(height: 8),
-                ...followUpActions.map((action) => Chip(
-                  label: Text(action),
-                  onDeleted: () {
-                    setState(() {
-                      followUpActions.remove(action);
-                    });
-                  },
-                )),
+                ...followUpActions.map(
+                  (action) => Chip(
+                    label: Text(action),
+                    onDeleted: () {
+                      setState(() {
+                        followUpActions.remove(action);
+                      });
+                    },
+                  ),
+                ),
                 TextButton.icon(
                   onPressed: () async {
                     final action = await _showAddFollowUpDialog(context);
@@ -611,7 +651,7 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
 
   Future<String?> _showAddFollowUpDialog(BuildContext context) async {
     final controller = TextEditingController();
-    
+
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -638,27 +678,29 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
     );
   }
 
-  void _showAlertDetails(BuildContext context, EmergencyAlert alert, EmergencyAlertsNotifier notifier) {
+  void _showAlertDetails(
+    BuildContext context,
+    EmergencyAlert alert,
+    EmergencyAlertsNotifier notifier,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => EmergencyAlertDetailsSheet(
-        alert: alert,
-        notifier: notifier,
-      ),
+      builder: (context) =>
+          EmergencyAlertDetailsSheet(alert: alert, notifier: notifier),
     );
   }
 
   /// Open location in external map app
   void _openLocationInMap(BuildContext context, EmergencyAlert alert) async {
     if (alert.latitude == null || alert.longitude == null) return;
-    
+
     try {
       final lat = alert.latitude!;
       final lng = alert.longitude!;
       final url = Uri.parse('https://www.google.com/maps?q=$lat,$lng');
-      
+
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
@@ -694,7 +736,7 @@ class _EmergencyResponseScreenState extends ConsumerState<EmergencyResponseScree
 class EmergencyAlertDetailsSheet extends StatelessWidget {
   final EmergencyAlert alert;
   final EmergencyAlertsNotifier notifier;
-  
+
   const EmergencyAlertDetailsSheet({
     super.key,
     required this.alert,
@@ -724,47 +766,74 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Text(
             'Emergency Alert Details',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildDetailRow(context, 'Alert ID', '#${alert.id}'),
           _buildDetailRow(context, 'Status', alert.status.toUpperCase()),
           _buildDetailRow(context, 'Severity', alert.severity.toUpperCase()),
           _buildDetailRow(context, 'Description', alert.description),
-          _buildDetailRow(context, 'User', alert.userName ?? 'User #${alert.userId}'),
-          _buildDetailRow(context, 'Triggered At', _formatTimestamp(alert.triggeredAt)),
-          
-          if (alert.acknowledgedAt != null) 
-            _buildDetailRow(context, 'Acknowledged At', _formatTimestamp(alert.acknowledgedAt!)),
-          if (alert.resolvedAt != null) 
-            _buildDetailRow(context, 'Resolved At', _formatTimestamp(alert.resolvedAt!)),
-          
+          _buildDetailRow(
+            context,
+            'User',
+            alert.userName ?? 'User #${alert.userId}',
+          ),
+          _buildDetailRow(
+            context,
+            'Triggered At',
+            _formatTimestamp(alert.triggeredAt),
+          ),
+
+          if (alert.acknowledgedAt != null)
+            _buildDetailRow(
+              context,
+              'Acknowledged At',
+              _formatTimestamp(alert.acknowledgedAt!),
+            ),
+          if (alert.resolvedAt != null)
+            _buildDetailRow(
+              context,
+              'Resolved At',
+              _formatTimestamp(alert.resolvedAt!),
+            ),
+
           if (alert.latitude != null && alert.longitude != null) ...[
             const SizedBox(height: 8),
             Text(
               'Location Information',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            _buildDetailRow(context, 'Location', alert.locationName ?? 'Unknown'),
-            _buildDetailRow(context, 'Coordinates', 
-              '${alert.latitude!.toStringAsFixed(6)}, ${alert.longitude!.toStringAsFixed(6)}'),
-            _buildDetailRow(context, 'Accuracy', '${alert.latitude!.toStringAsFixed(1)} meters'),
+            _buildDetailRow(
+              context,
+              'Location',
+              alert.locationName ?? 'Unknown',
+            ),
+            _buildDetailRow(
+              context,
+              'Coordinates',
+              '${alert.latitude!.toStringAsFixed(6)}, ${alert.longitude!.toStringAsFixed(6)}',
+            ),
+            _buildDetailRow(
+              context,
+              'Accuracy',
+              '${alert.latitude!.toStringAsFixed(1)} meters',
+            ),
           ],
-          
+
           const SizedBox(height: 24),
-          
+
           // Quick actions
           Row(
             children: [
@@ -777,18 +846,18 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: alert.latitude != null && alert.longitude != null 
-                    ? () {
-                        Navigator.of(context).pop();
-                        _openLocationInMap(context, alert);
-                      }
-                    : null,
+                  onPressed: alert.latitude != null && alert.longitude != null
+                      ? () {
+                          Navigator.of(context).pop();
+                          _openLocationInMap(context, alert);
+                        }
+                      : null,
                   child: const Text('View Location'),
                 ),
               ),
             ],
           ),
-          
+
           // Bottom padding for safe area
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
@@ -813,10 +882,7 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),
@@ -834,12 +900,12 @@ class EmergencyAlertDetailsSheet extends StatelessWidget {
 
   void _openLocationInMap(BuildContext context, EmergencyAlert alert) async {
     if (alert.latitude == null || alert.longitude == null) return;
-    
+
     try {
       final lat = alert.latitude!;
       final lng = alert.longitude!;
       final url = Uri.parse('https://www.google.com/maps?q=$lat,$lng');
-      
+
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {

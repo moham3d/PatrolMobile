@@ -243,7 +243,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: _resolutionType,
+          initialValue: _resolutionType,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -446,7 +446,7 @@ class _EmergencyCancelResolveScreenState extends ConsumerState<EmergencyCancelRe
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to ${_selectedAction} alert: $e'),
+            content: Text('Failed to $_selectedAction alert: $e'),
             backgroundColor: Colors.red,
           ),
         );

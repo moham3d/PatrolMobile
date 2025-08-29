@@ -46,8 +46,8 @@ class _CheckpointListScreenState extends ConsumerState<CheckpointListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/scanner'),
-        child: const Icon(Icons.qr_code_scanner),
         tooltip: 'Scan Checkpoint',
+        child: const Icon(Icons.qr_code_scanner),
       ),
     );
   }

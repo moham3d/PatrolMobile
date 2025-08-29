@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/providers/patrol_provider.dart';
-import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/patrol_simple.dart';
 import '../../../core/models/checkpoint.dart';
 import '../widgets/patrol_progress_indicator.dart';

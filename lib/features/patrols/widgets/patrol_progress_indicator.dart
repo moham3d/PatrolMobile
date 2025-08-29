@@ -302,13 +302,13 @@ class StepProgressIndicator extends StatelessWidget {
 
   Widget _getStepIcon(int index) {
     if (index < currentStep) {
-      return Icon(
+      return const Icon(
         Icons.check,
         size: 16,
         color: Colors.white,
       );
     } else if (index == currentStep) {
-      return Icon(
+      return const Icon(
         Icons.play_arrow,
         size: 16,
         color: Colors.white,

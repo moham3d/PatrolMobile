@@ -6,33 +6,35 @@ import '../constants/app_constants.dart';
 /// Connectivity monitoring service to track online/offline status
 class ConnectivityService {
   static ConnectivityService? _instance;
-  static ConnectivityService get instance => _instance ??= ConnectivityService._internal();
-  
+  static ConnectivityService get instance =>
+      _instance ??= ConnectivityService._internal();
+
   ConnectivityService._internal();
 
   final Connectivity _connectivity = Connectivity();
-  final StreamController<bool> _connectivityController = StreamController.broadcast();
-  
+  final StreamController<bool> _connectivityController =
+      StreamController.broadcast();
+
   bool _isOnline = false;
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<dynamic>? _connectivitySubscription;
   Timer? _apiHealthCheckTimer;
-  
+
   /// Stream of connectivity status
   Stream<bool> get connectivityStream => _connectivityController.stream;
-  
+
   /// Current connectivity status
   bool get isOnline => _isOnline;
-  
+
   /// Initialize connectivity monitoring
   Future<void> initialize() async {
     // Check initial connectivity
     await _checkConnectivity();
-    
-    // Listen to connectivity changes
+
+    // Listen to connectivity changes (newer connectivity_plus may emit List<ConnectivityResult>)
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      _onConnectivityChanged,
+      (event) => _onConnectivityChanged(event),
     );
-    
+
     // Start periodic API health checks
     _startApiHealthChecks();
   }
@@ -40,8 +42,8 @@ class ConnectivityService {
   /// Check current connectivity status
   Future<void> _checkConnectivity() async {
     try {
-      final connectivityResult = await _connectivity.checkConnectivity();
-      await _onConnectivityChanged(connectivityResult);
+      final result = await _connectivity.checkConnectivity();
+      await _onConnectivityChanged(result);
     } catch (e) {
       print('Error checking connectivity: $e');
       _updateConnectionStatus(false);
@@ -49,10 +51,11 @@ class ConnectivityService {
   }
 
   /// Handle connectivity changes
-  Future<void> _onConnectivityChanged(ConnectivityResult result) async {
-    print('Connectivity changed: $result');
-    
-    switch (result) {
+  Future<void> _onConnectivityChanged(dynamic event) async {
+    final connectivityResult = _normalizeConnectivity(event);
+    print('Connectivity changed: $connectivityResult');
+
+    switch (connectivityResult) {
       case ConnectivityResult.none:
         _updateConnectionStatus(false);
         break;
@@ -67,13 +70,27 @@ class ConnectivityService {
     }
   }
 
+  /// Normalize connectivity events which may be a single ConnectivityResult or a List<ConnectivityResult>
+  ConnectivityResult _normalizeConnectivity(dynamic event) {
+    if (event is ConnectivityResult) return event;
+    if (event is List) {
+      for (final item in event) {
+        if (item is ConnectivityResult && item != ConnectivityResult.none)
+          return item;
+      }
+      if (event.isNotEmpty && event.first is ConnectivityResult)
+        return event.first as ConnectivityResult;
+    }
+    return ConnectivityResult.none;
+  }
+
   /// Verify actual API connectivity
   Future<void> _verifyApiConnectivity() async {
     try {
       final dio = Dio();
       dio.options.connectTimeout = const Duration(seconds: 5);
       dio.options.receiveTimeout = const Duration(seconds: 5);
-      
+
       // Try to reach the health endpoint
       final response = await dio.get(
         '${AppConstants.apiBaseUrl}/health',
@@ -81,11 +98,12 @@ class ConnectivityService {
           validateStatus: (status) => status != null && status < 500,
         ),
       );
-      
-      final isConnected = response.statusCode != null && 
-                         response.statusCode! >= 200 && 
-                         response.statusCode! < 500;
-      
+
+      final isConnected =
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 500;
+
       _updateConnectionStatus(isConnected);
     } catch (e) {
       print('API connectivity check failed: $e');
@@ -98,9 +116,9 @@ class ConnectivityService {
     if (_isOnline != isOnline) {
       _isOnline = isOnline;
       _connectivityController.add(isOnline);
-      
+
       print('Connection status changed: ${isOnline ? 'ONLINE' : 'OFFLINE'}');
-      
+
       // Trigger sync when coming back online
       if (isOnline) {
         _onConnectionRestored();
@@ -138,16 +156,16 @@ class ConnectivityService {
   /// Check if specific endpoint is reachable
   Future<bool> isEndpointReachable(String endpoint) async {
     if (!_isOnline) return false;
-    
+
     try {
       final dio = Dio();
       dio.options.connectTimeout = const Duration(seconds: 3);
       dio.options.receiveTimeout = const Duration(seconds: 3);
-      
+
       final response = await dio.head(endpoint);
-      return response.statusCode != null && 
-             response.statusCode! >= 200 && 
-             response.statusCode! < 500;
+      return response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 500;
     } catch (e) {
       return false;
     }
@@ -157,7 +175,7 @@ class ConnectivityService {
   Future<Map<String, dynamic>> getConnectivityInfo() async {
     final connectivityResult = await _connectivity.checkConnectivity();
     final locationPermission = await _checkLocationPermission();
-    
+
     return {
       'is_online': _isOnline,
       'connectivity_type': connectivityResult.toString(),
@@ -186,11 +204,7 @@ class ConnectivityService {
 }
 
 /// Connectivity status enum for better type safety
-enum ConnectivityStatus {
-  online,
-  offline,
-  checking,
-}
+enum ConnectivityStatus { online, offline, checking }
 
 /// Connectivity status with additional metadata
 class ConnectivityInfo {

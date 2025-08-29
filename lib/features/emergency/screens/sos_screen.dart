@@ -274,69 +274,68 @@ class _SOSScreenState extends ConsumerState<SOSScreen>
                 const SizedBox(height: 32),
                 
                 // Status card with real alert data
-                if (emergencyState is Triggered) 
-                  Card(
-                    color: Colors.green.shade50,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                Card(
+                  color: Colors.green.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAlertInfoRow(
+                          Icons.emergency, 
+                          'Alert ID', 
+                          '#${emergencyState.alert.id}',
+                          Colors.green,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildAlertInfoRow(
+                          Icons.security, 
+                          'Severity', 
+                          emergencyState.alert.severity.toUpperCase(),
+                          emergencyState.alert.severityColor,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildAlertInfoRow(
+                          Icons.schedule, 
+                          'Auto-Escalation', 
+                          'In ${AppConstants.emergencyEscalationMinutes} minutes if no response',
+                          Colors.orange.shade600,
+                        ),
+                        const SizedBox(height: 8),
+                        if (emergencyState.alert.latitude != null && emergencyState.alert.longitude != null)
                           _buildAlertInfoRow(
-                            Icons.emergency, 
-                            'Alert ID', 
-                            '#${emergencyState.alert.id}',
+                            Icons.location_on, 
+                            'Location', 
+                            'GPS: ${emergencyState.alert.latitude!.toStringAsFixed(6)}, ${emergencyState.alert.longitude!.toStringAsFixed(6)}',
                             Colors.green,
                           ),
+                        if (emergencyState.alert.locationName != null) ...[
                           const SizedBox(height: 8),
                           _buildAlertInfoRow(
-                            Icons.security, 
-                            'Severity', 
-                            emergencyState.alert.severity.toUpperCase(),
-                            emergencyState.alert.severityColor,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildAlertInfoRow(
-                            Icons.schedule, 
-                            'Auto-Escalation', 
-                            'In ${AppConstants.emergencyEscalationMinutes} minutes if no response',
-                            Colors.orange.shade600,
-                          ),
-                          const SizedBox(height: 8),
-                          if (emergencyState.alert.latitude != null && emergencyState.alert.longitude != null)
-                            _buildAlertInfoRow(
-                              Icons.location_on, 
-                              'Location', 
-                              'GPS: ${emergencyState.alert.latitude!.toStringAsFixed(6)}, ${emergencyState.alert.longitude!.toStringAsFixed(6)}',
-                              Colors.green,
-                            ),
-                          if (emergencyState.alert.locationName != null) ...[
-                            const SizedBox(height: 8),
-                            _buildAlertInfoRow(
-                              Icons.place, 
-                              'Location Name', 
-                              emergencyState.alert.locationName!,
-                              Colors.green,
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                          _buildAlertInfoRow(
-                            Icons.access_time, 
-                            'Alert Time', 
-                            emergencyState.alert.triggeredAt.substring(0, 19).replaceAll('T', ' '),
+                            Icons.place, 
+                            'Location Name', 
+                            emergencyState.alert.locationName!,
                             Colors.green,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildAlertInfoRow(
-                            Icons.person, 
-                            'Status', 
-                            emergencyState.alert.status.toUpperCase(),
-                            emergencyState.alert.isActive ? Colors.red : Colors.green,
                           ),
                         ],
-                      ),
+                        const SizedBox(height: 8),
+                        _buildAlertInfoRow(
+                          Icons.access_time, 
+                          'Alert Time', 
+                          emergencyState.alert.triggeredAt.substring(0, 19).replaceAll('T', ' '),
+                          Colors.green,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildAlertInfoRow(
+                          Icons.person, 
+                          'Status', 
+                          emergencyState.alert.status.toUpperCase(),
+                          emergencyState.alert.isActive ? Colors.red : Colors.green,
+                        ),
+                      ],
                     ),
                   ),
+                ),
                 
                 const SizedBox(height: 24),
                 

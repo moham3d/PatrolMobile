@@ -355,7 +355,7 @@ class _EnhancedPatrolDashboardState extends ConsumerState<EnhancedPatrolDashboar
             Icon(Icons.assignment_outlined, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'No ${type} patrols found',
+              'No $type patrols found',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.grey.shade600,
               ),
@@ -599,8 +599,8 @@ class _EnhancedPatrolDashboardState extends ConsumerState<EnhancedPatrolDashboar
     } else if (user.canAccess('supervisor')) {
       return FloatingActionButton(
         onPressed: () => context.push('/patrols/map'),
-        child: const Icon(Icons.map),
         backgroundColor: Colors.blue,
+        child: const Icon(Icons.map),
       );
     }
     return null;

@@ -358,7 +358,7 @@ class _IncidentDetailScreenState extends ConsumerState<IncidentDetailScreen> {
                   labelText: 'Update Status',
                   border: OutlineInputBorder(),
                 ),
-                value: _newStatus ?? incident.status.toLowerCase(),
+                initialValue: _newStatus ?? incident.status.toLowerCase(),
                 items: _statusOptions.map((status) {
                   return DropdownMenuItem(
                     value: status,

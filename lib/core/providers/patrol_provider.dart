@@ -4,7 +4,6 @@ import '../models/patrol_history.dart';
 import '../models/checkpoint.dart';
 import '../services/patrol_service.dart';
 import '../services/auth_service.dart';
-import 'auth_provider.dart';
 
 /// Provider for patrol service
 final patrolServiceProvider = Provider<PatrolService>((ref) {

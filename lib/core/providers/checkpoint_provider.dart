@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/checkpoint.dart';
 import '../services/checkpoint_service.dart';
 import '../services/auth_service.dart';
-import 'auth_provider.dart';
 
 /// Checkpoint service provider
 final checkpointServiceProvider = Provider<CheckpointService>((ref) {

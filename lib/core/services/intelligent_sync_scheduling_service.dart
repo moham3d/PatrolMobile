@@ -9,8 +9,9 @@ import 'auth_service.dart';
 /// Intelligent sync scheduling service using workmanager for background tasks
 class IntelligentSyncSchedulingService {
   static IntelligentSyncSchedulingService? _instance;
-  static IntelligentSyncSchedulingService get instance => _instance ??= IntelligentSyncSchedulingService._internal();
-  
+  static IntelligentSyncSchedulingService get instance =>
+      _instance ??= IntelligentSyncSchedulingService._internal();
+
   IntelligentSyncSchedulingService._internal();
 
   static const String _syncTaskName = 'intelligent_sync_task';
@@ -18,27 +19,28 @@ class IntelligentSyncSchedulingService {
   static const String _criticalDataSyncTask = 'critical_data_sync';
   static const String _offlineDataSyncTask = 'offline_data_sync';
 
-  final PerformanceMonitoringService _performanceService = PerformanceMonitoringService.instance;
+  final PerformanceMonitoringService _performanceService =
+      PerformanceMonitoringService.instance;
   final SyncService _syncService = SyncService.instance;
   final ConnectivityService _connectivityService = ConnectivityService.instance;
   final AuthService _authService = AuthService.instance;
 
   Timer? _adaptiveScheduleTimer;
   bool _isInitialized = false;
-  
+
   // Scheduling configuration
   Duration _currentSyncInterval = const Duration(minutes: 15);
-  Duration _lastKnownGoodInterval = const Duration(minutes: 15);
-  
+  final Duration _lastKnownGoodInterval = const Duration(minutes: 15);
+
   // Battery-optimized intervals
   static const Map<int, Duration> _batteryOptimizedIntervals = {
-    100: Duration(minutes: 10),   // 80-100% battery: every 10 minutes
-    80: Duration(minutes: 15),    // 60-79% battery: every 15 minutes  
-    60: Duration(minutes: 30),    // 40-59% battery: every 30 minutes
-    40: Duration(minutes: 60),    // 20-39% battery: every hour
-    20: Duration(minutes: 120),   // 10-19% battery: every 2 hours
-    10: Duration(minutes: 300),   // <10% battery: every 5 hours
-    0: Duration(minutes: 600),    // Critical battery: every 10 hours
+    100: Duration(minutes: 10), // 80-100% battery: every 10 minutes
+    80: Duration(minutes: 15), // 60-79% battery: every 15 minutes
+    60: Duration(minutes: 30), // 40-59% battery: every 30 minutes
+    40: Duration(minutes: 60), // 20-39% battery: every hour
+    20: Duration(minutes: 120), // 10-19% battery: every 2 hours
+    10: Duration(minutes: 300), // <10% battery: every 5 hours
+    0: Duration(minutes: 600), // Critical battery: every 10 hours
   };
 
   // Connectivity-based intervals
@@ -46,7 +48,9 @@ class IntelligentSyncSchedulingService {
     ConnectivityResult.wifi: Duration(minutes: 10),
     ConnectivityResult.mobile: Duration(minutes: 20),
     ConnectivityResult.ethernet: Duration(minutes: 5),
-    ConnectivityResult.none: Duration(hours: 1), // Retry less frequently when offline
+    ConnectivityResult.none: Duration(
+      hours: 1,
+    ), // Retry less frequently when offline
   };
 
   /// Initialize the intelligent sync scheduling service
@@ -64,10 +68,10 @@ class IntelligentSyncSchedulingService {
 
       // Start adaptive scheduling
       await _startAdaptiveScheduling();
-      
+
       // Register background tasks
       await _registerBackgroundTasks();
-      
+
       _isInitialized = true;
       print('IntelligentSyncSchedulingService: Initialization complete');
     } catch (e) {
@@ -79,13 +83,13 @@ class IntelligentSyncSchedulingService {
   Future<void> _startAdaptiveScheduling() async {
     // Cancel existing timer
     _adaptiveScheduleTimer?.cancel();
-    
+
     // Start timer that adjusts sync intervals based on performance
     _adaptiveScheduleTimer = Timer.periodic(
       const Duration(minutes: 5), // Check every 5 minutes
       (timer) async => await _adaptSyncSchedule(),
     );
-    
+
     // Do an initial adaptation
     await _adaptSyncSchedule();
   }
@@ -94,9 +98,10 @@ class IntelligentSyncSchedulingService {
   Future<void> _adaptSyncSchedule() async {
     try {
       final batteryLevel = _performanceService.batteryLevel;
-      final connectivity = await Connectivity().checkConnectivity();
+      final rawConnectivity = await Connectivity().checkConnectivity();
+      final connectivity = _normalizeConnectivity(rawConnectivity);
       final isLowPowerMode = _performanceService.isLowPowerMode;
-      
+
       Duration newInterval = _calculateOptimalInterval(
         batteryLevel: batteryLevel,
         connectivity: connectivity,
@@ -104,16 +109,28 @@ class IntelligentSyncSchedulingService {
       );
 
       // Only update if interval changed significantly (more than 5 minutes difference)
-      if ((_currentSyncInterval - newInterval).abs() > const Duration(minutes: 5)) {
+      if ((_currentSyncInterval - newInterval).abs() >
+          const Duration(minutes: 5)) {
         _currentSyncInterval = newInterval;
         await _rescheduleBackgroundSync();
-        
-        print('IntelligentSyncSchedulingService: Adapted sync interval to ${newInterval.inMinutes} minutes '
-              '(battery: $batteryLevel%, connectivity: $connectivity, low power: $isLowPowerMode)');
+
+        print(
+          'IntelligentSyncSchedulingService: Adapted sync interval to ${newInterval.inMinutes} minutes '
+          '(battery: $batteryLevel%, connectivity: $connectivity, low power: $isLowPowerMode)',
+        );
       }
     } catch (e) {
       print('IntelligentSyncSchedulingService: Error adapting schedule: $e');
     }
+  }
+
+  ConnectivityResult _normalizeConnectivity(dynamic event) {
+    if (event is ConnectivityResult) return event;
+    if (event is List && event.isNotEmpty) {
+      final first = event.first;
+      if (first is ConnectivityResult) return first;
+    }
+    return ConnectivityResult.none;
   }
 
   /// Calculate optimal sync interval based on device conditions
@@ -124,27 +141,29 @@ class IntelligentSyncSchedulingService {
   }) {
     // Start with battery-optimized interval
     Duration interval = _getBatteryOptimizedInterval(batteryLevel);
-    
+
     // Adjust for connectivity
-    final connectivityInterval = _connectivityBasedIntervals[connectivity] ?? const Duration(minutes: 30);
-    
+    final connectivityInterval =
+        _connectivityBasedIntervals[connectivity] ??
+        const Duration(minutes: 30);
+
     // Use the longer of the two for battery conservation
     if (connectivityInterval > interval) {
       interval = connectivityInterval;
     }
-    
+
     // In low power mode, double the interval
     if (isLowPowerMode) {
       interval = Duration(minutes: interval.inMinutes * 2);
     }
-    
+
     // Ensure minimum interval of 5 minutes and maximum of 12 hours
     if (interval.inMinutes < 5) {
       interval = const Duration(minutes: 5);
     } else if (interval.inHours > 12) {
       interval = const Duration(hours: 12);
     }
-    
+
     return interval;
   }
 
@@ -163,7 +182,7 @@ class IntelligentSyncSchedulingService {
     try {
       // Cancel existing tasks
       await Workmanager().cancelAll();
-      
+
       // Register periodic sync task
       await Workmanager().registerPeriodicTask(
         _syncTaskName,
@@ -176,17 +195,16 @@ class IntelligentSyncSchedulingService {
           requiresDeviceIdle: false,
           requiresStorageNotLow: true,
         ),
-        inputData: {
-          'task_type': 'intelligent_sync',
-          'priority': 'normal',
-        },
+        inputData: {'task_type': 'intelligent_sync', 'priority': 'normal'},
       );
 
       // Register critical data sync (more frequent, for emergency data)
       await Workmanager().registerPeriodicTask(
         _criticalDataSyncTask,
         _criticalDataSyncTask,
-        frequency: const Duration(minutes: 5), // Always every 5 minutes for critical data
+        frequency: const Duration(
+          minutes: 5,
+        ), // Always every 5 minutes for critical data
         constraints: Constraints(
           networkType: NetworkType.connected,
           requiresBatteryNotLow: false,
@@ -194,24 +212,18 @@ class IntelligentSyncSchedulingService {
           requiresDeviceIdle: false,
           requiresStorageNotLow: false,
         ),
-        inputData: {
-          'task_type': 'critical_sync',
-          'priority': 'high',
-        },
+        inputData: {'task_type': 'critical_sync', 'priority': 'high'},
       );
 
       // Register offline data sync (when back online)
       await Workmanager().registerPeriodicTask(
         _offlineDataSyncTask,
         _offlineDataSyncTask,
-        frequency: const Duration(minutes: 2), // Check frequently for connectivity
-        constraints: Constraints(
-          networkType: NetworkType.connected,
-        ),
-        inputData: {
-          'task_type': 'offline_sync',
-          'priority': 'normal',
-        },
+        frequency: const Duration(
+          minutes: 2,
+        ), // Check frequently for connectivity
+        constraints: Constraints(networkType: NetworkType.connected),
+        inputData: {'task_type': 'offline_sync', 'priority': 'normal'},
       );
 
       print('IntelligentSyncSchedulingService: Background tasks registered');
@@ -225,7 +237,7 @@ class IntelligentSyncSchedulingService {
     try {
       // Cancel existing sync task
       await Workmanager().cancelByUniqueName(_syncTaskName);
-      
+
       // Register with new interval
       await Workmanager().registerPeriodicTask(
         _syncTaskName,
@@ -244,8 +256,10 @@ class IntelligentSyncSchedulingService {
           'interval_minutes': _currentSyncInterval.inMinutes,
         },
       );
-      
-      print('IntelligentSyncSchedulingService: Rescheduled sync task with ${_currentSyncInterval.inMinutes} minute interval');
+
+      print(
+        'IntelligentSyncSchedulingService: Rescheduled sync task with ${_currentSyncInterval.inMinutes} minute interval',
+      );
     } catch (e) {
       print('IntelligentSyncSchedulingService: Failed to reschedule: $e');
     }
@@ -260,19 +274,21 @@ class IntelligentSyncSchedulingService {
       await Workmanager().registerOneOffTask(
         'immediate_sync_${DateTime.now().millisecondsSinceEpoch}',
         _syncTaskName,
-        constraints: Constraints(
-          networkType: NetworkType.connected,
-        ),
+        constraints: Constraints(networkType: NetworkType.connected),
         inputData: {
           'task_type': criticalOnly ? 'critical_sync' : 'immediate_sync',
           'priority': 'high',
           'reason': reason ?? 'manual_trigger',
         },
       );
-      
-      print('IntelligentSyncSchedulingService: Triggered immediate sync (critical: $criticalOnly, reason: $reason)');
+
+      print(
+        'IntelligentSyncSchedulingService: Triggered immediate sync (critical: $criticalOnly, reason: $reason)',
+      );
     } catch (e) {
-      print('IntelligentSyncSchedulingService: Failed to trigger immediate sync: $e');
+      print(
+        'IntelligentSyncSchedulingService: Failed to trigger immediate sync: $e',
+      );
     }
   }
 
@@ -304,7 +320,9 @@ class IntelligentSyncSchedulingService {
       'current_interval_minutes': _currentSyncInterval.inMinutes,
       'battery_level': _performanceService.batteryLevel,
       'is_low_power_mode': _performanceService.isLowPowerMode,
-      'connectivity': _connectivityService.isOnline ? 'connected' : 'disconnected',
+      'connectivity': _connectivityService.isOnline
+          ? 'connected'
+          : 'disconnected',
       'is_initialized': _isInitialized,
       'last_adaptation': DateTime.now().toIso8601String(),
     };
@@ -322,18 +340,22 @@ class IntelligentSyncSchedulingService {
 void _callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     try {
-      print('IntelligentSyncSchedulingService: Executing background task: $task');
-      
+      print(
+        'IntelligentSyncSchedulingService: Executing background task: $task',
+      );
+
       final taskType = inputData?['task_type'] ?? 'unknown';
       final priority = inputData?['priority'] ?? 'normal';
-      
+
       // Initialize services for background context
       final syncService = SyncService.instance;
       final authService = AuthService.instance;
-      
+
       // Check if user is authenticated
       if (!authService.isAuthenticated) {
-        print('IntelligentSyncSchedulingService: User not authenticated, skipping sync');
+        print(
+          'IntelligentSyncSchedulingService: User not authenticated, skipping sync',
+        );
         return false;
       }
 
@@ -341,22 +363,26 @@ void _callbackDispatcher() {
         case 'critical_sync':
           await _performCriticalSync(syncService);
           break;
-          
+
         case 'offline_sync':
           await _performOfflineDataSync(syncService);
           break;
-          
+
         case 'intelligent_sync':
         case 'immediate_sync':
         default:
           await _performIntelligentSync(syncService, priority);
           break;
       }
-      
-      print('IntelligentSyncSchedulingService: Background task completed: $task');
+
+      print(
+        'IntelligentSyncSchedulingService: Background task completed: $task',
+      );
       return true;
     } catch (e) {
-      print('IntelligentSyncSchedulingService: Background task failed: $task, error: $e');
+      print(
+        'IntelligentSyncSchedulingService: Background task failed: $task, error: $e',
+      );
       return false;
     }
   });
@@ -378,7 +404,7 @@ Future<void> _performOfflineDataSync(SyncService syncService) async {
   try {
     // Check if there's pending offline data
     final hasPendingData = await syncService.hasPendingOfflineData();
-    
+
     if (hasPendingData) {
       await syncService.syncOfflineData();
       print('IntelligentSyncSchedulingService: Offline data sync completed');
@@ -389,11 +415,14 @@ Future<void> _performOfflineDataSync(SyncService syncService) async {
 }
 
 /// Perform intelligent sync based on current conditions
-Future<void> _performIntelligentSync(SyncService syncService, String priority) async {
+Future<void> _performIntelligentSync(
+  SyncService syncService,
+  String priority,
+) async {
   try {
     final performanceService = PerformanceMonitoringService.instance;
     final batteryLevel = performanceService.batteryLevel;
-    
+
     // Adjust sync scope based on battery level
     if (batteryLevel < 20) {
       // Low battery: only sync critical data
@@ -405,8 +434,10 @@ Future<void> _performIntelligentSync(SyncService syncService, String priority) a
       // Good battery: full sync
       await syncService.performFullSync();
     }
-    
-    print('IntelligentSyncSchedulingService: Intelligent sync completed (battery: $batteryLevel%, priority: $priority)');
+
+    print(
+      'IntelligentSyncSchedulingService: Intelligent sync completed (battery: $batteryLevel%, priority: $priority)',
+    );
   } catch (e) {
     print('IntelligentSyncSchedulingService: Intelligent sync failed: $e');
   }

@@ -460,7 +460,7 @@ class _EnhancedPatrolCompletionWorkflowState extends ConsumerState<EnhancedPatro
               Expanded(
                 child: _buildSummaryItem(
                   'Progress',
-                  '${progress?.completionPercentage?.toStringAsFixed(1) ?? 0}%',
+                  '${progress?.completionPercentage.toStringAsFixed(1) ?? 0}%',
                   Icons.percent,
                 ),
               ),

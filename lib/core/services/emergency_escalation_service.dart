@@ -52,7 +52,7 @@ class EmergencyEscalationService {
     
     // Start escalation timer
     _escalationTimers[alertId] = Timer(
-      Duration(minutes: AppConstants.emergencyEscalationMinutes),
+      const Duration(minutes: AppConstants.emergencyEscalationMinutes),
       () => _escalateAlert(alert),
     );
   }
@@ -76,7 +76,7 @@ class EmergencyEscalationService {
     // Note: Timer doesn't provide remaining time directly
     // In a real implementation, you would track start time and calculate remaining time
     return _escalationTimers.containsKey(alertId) 
-        ? Duration(minutes: AppConstants.emergencyEscalationMinutes)
+        ? const Duration(minutes: AppConstants.emergencyEscalationMinutes)
         : null;
   }
 
@@ -420,7 +420,7 @@ class EmergencyEscalationService {
     return EscalationStatus(
       alertId: alertId,
       isActive: true,
-      remainingTime: Duration(minutes: AppConstants.emergencyEscalationMinutes),
+      remainingTime: const Duration(minutes: AppConstants.emergencyEscalationMinutes),
       escalationLevel: 'pending',
     );
   }

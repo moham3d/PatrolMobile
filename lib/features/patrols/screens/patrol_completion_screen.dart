@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 import '../../../core/providers/patrol_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/patrol_simple.dart';
-import '../../../core/models/checkpoint.dart';
 import '../../../core/constants/app_constants.dart';
 import '../widgets/enhanced_checkpoint_status_indicator.dart';
 

@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
-import '../constants/app_constants.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
 import 'websocket_service.dart';

@@ -2,7 +2,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/checkpoint.dart';
 import '../models/patrol_simple.dart';
-import '../constants/app_constants.dart';
 
 /// Local SQLite database service for offline data storage
 class DatabaseService {

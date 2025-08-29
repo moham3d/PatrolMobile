@@ -57,7 +57,7 @@ class PatrolHistoryEntry {
       priority: json['priority'] as String?,
       startDateTime: startTime,
       endDateTime: endTime,
-      duration: endTime != null ? endTime.difference(startTime) : null,
+      duration: endTime?.difference(startTime),
       totalCheckpoints: json['total_checkpoints'] as int,
       checkpointsVisited: json['checkpoints_visited'] as int,
       completionPercentage: (json['completion_percentage'] as num).toDouble(),

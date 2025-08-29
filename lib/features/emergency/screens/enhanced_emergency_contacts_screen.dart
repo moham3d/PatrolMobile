@@ -17,7 +17,7 @@ class _EnhancedEmergencyContactsScreenState extends ConsumerState<EnhancedEmerge
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedContactType = 'all';
-  Map<int, ContactTestResult?> _testResults = {};
+  final Map<int, ContactTestResult?> _testResults = {};
 
   @override
   void initState() {

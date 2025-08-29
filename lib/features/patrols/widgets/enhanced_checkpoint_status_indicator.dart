@@ -258,13 +258,13 @@ class CheckpointStatusIndicator extends StatelessWidget {
                         
                         if (currentCheckpoint.hasLocation) ...[
                           const SizedBox(width: 16),
-                          Icon(
+                          const Icon(
                             Icons.location_on,
                             size: 16,
                             color: Colors.blue,
                           ),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             'GPS',
                             style: TextStyle(
                               fontSize: 12,
@@ -465,7 +465,7 @@ class HorizontalCheckpointProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 60,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,

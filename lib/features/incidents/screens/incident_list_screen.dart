@@ -131,7 +131,7 @@ class _IncidentListScreenState extends ConsumerState<IncidentListScreen> {
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
-                  value: _selectedStatus ?? 'All',
+                  initialValue: _selectedStatus ?? 'All',
                   items: _statusFilters.map((status) {
                     return DropdownMenuItem(
                       value: status,
@@ -154,7 +154,7 @@ class _IncidentListScreenState extends ConsumerState<IncidentListScreen> {
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
-                  value: _selectedPriority ?? 'All',
+                  initialValue: _selectedPriority ?? 'All',
                   items: _priorityFilters.map((priority) {
                     return DropdownMenuItem(
                       value: priority,
