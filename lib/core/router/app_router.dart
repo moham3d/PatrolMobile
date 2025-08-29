@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/emergency/screens/sos_screen.dart';
@@ -23,10 +24,25 @@ import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/emergency.dart';
 
+/// GoRouter refresh to listen to auth state changes with RiverPod
+class GoRouterRefresh extends ChangeNotifier {
+  GoRouterRefresh(this.ref) {
+    ref.listen<AuthState>(authNotifierProvider, (_, __) => notifyListeners());
+  }
+
+  final WidgetRef ref;
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+}
+
 /// App routing configuration using GoRouter
 class AppRouter {
   static GoRouter router(WidgetRef ref) => GoRouter(
     initialLocation: AppConstants.loginRoute,
+    refreshListenable: GoRouterRefresh(ref),
     redirect: (context, state) {
       final authState = ref.read(authNotifierProvider);
       final isAuthenticated = authState is Authenticated;

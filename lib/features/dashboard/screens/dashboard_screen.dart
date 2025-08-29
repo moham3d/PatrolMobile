@@ -159,8 +159,8 @@ class DashboardBody extends ConsumerWidget {
                   radius: 24,
                   backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
                   child: Text(
-                    user.firstName.isNotEmpty && user.lastName.isNotEmpty
-                        ? '${user.firstName[0]}${user.lastName[0]}'
+                    user.fullName.isNotEmpty
+                        ? user.fullName.split(' ').where((n) => n.isNotEmpty).map((n) => n[0]).take(2).join()
                         : user.username[0].toUpperCase(),
                     style: TextStyle(
                       color: Theme.of(context).primaryColor,

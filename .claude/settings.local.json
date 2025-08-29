@@ -10,7 +10,10 @@
       "Bash(mv:*)",
       "Bash(rm:*)",
       "Bash(dir:*)",
-      "Bash(flutter pub run build_runner build:*)"
+      "Bash(flutter pub run build_runner build:*)",
+      "Bash(curl:*)",
+      "Bash(flutter emulators:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": [],

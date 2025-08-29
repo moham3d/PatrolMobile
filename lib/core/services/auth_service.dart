@@ -41,6 +41,9 @@ class AuthService {
           'username': username,
           'password': password,
         }),
+        options: Options(headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
       );
 
       if (response.data == null) {

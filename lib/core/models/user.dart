@@ -8,10 +8,8 @@ class User {
   final int id;
   final String username;
   final String email;
-  @JsonKey(name: 'first_name')
-  final String firstName;
-  @JsonKey(name: 'last_name')
-  final String lastName;
+  @JsonKey(name: 'full_name')
+  final String fullName;
   final String role;
   @JsonKey(name: 'is_active')
   final bool isActive;
@@ -27,8 +25,7 @@ class User {
     required this.id,
     required this.username,
     required this.email,
-    required this.firstName,
-    required this.lastName,
+    required this.fullName,
     required this.role,
     required this.isActive,
     required this.createdAt,
@@ -41,7 +38,7 @@ class User {
   Map<String, dynamic> toJson() => _$UserToJson(this);
 
   /// Get display name
-  String get displayName => '$firstName $lastName'.trim();
+  String get displayName => fullName;
 
   /// Check if user is a guard
   bool get isGuard => role.toLowerCase() == 'guard' || role.toLowerCase() == 'mobile guard';
@@ -124,6 +121,10 @@ class AuthResponse {
   @JsonKey(name: 'expires_in')
   final int expiresIn;
   final User user;
+  @JsonKey(name: 'device_registered')
+  final bool deviceRegistered;
+  @JsonKey(name: 'offline_data')
+  final Map<String, dynamic>? offlineData;
 
   const AuthResponse({
     required this.accessToken,
@@ -131,6 +132,8 @@ class AuthResponse {
     required this.tokenType,
     required this.expiresIn,
     required this.user,
+    required this.deviceRegistered,
+    this.offlineData,
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) => 
